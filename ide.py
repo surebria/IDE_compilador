@@ -125,7 +125,7 @@ class CompilerIDE(QMainWindow):
         menu_bar.setStyleSheet("QMenuBar { background-color: #f0f0f0; }")
         
         file_menu = menu_bar.addMenu("Archivo")
-        file_menu.setStyleSheet("QMenu { background-color: #ffffff; border: 1px solid #cccccc; }")
+        
         
         self.new_action = QAction("Nuevo", self)
         self.open_action = QAction("Abrir", self)
