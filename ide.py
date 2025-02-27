@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
-    QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar
+    QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar
 )
 from PyQt6.QtGui import QAction, QColor, QPainter, QTextFormat, QFontMetrics, QIcon
 from PyQt6.QtCore import QRect, Qt, QSize, pyqtSlot
@@ -30,12 +30,75 @@ class CodeEditor(QPlainTextEdit):
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
         self.cursorPositionChanged.connect(self.highlight_current_line)
+        self.cursorPositionChanged.connect(self.update_cursor_position)
         
         self.update_line_number_area_width(0)
         self.highlight_current_line()
         
         # Setting placeholder text
         self.setPlaceholderText("Escriba aquí...")
+        
+        # Reference to main window for status updates
+        self.main_window = None
+        
+        # Crear barras de desplazamiento literales
+        self.horizontal_scrollbar = QScrollBar(Qt.Orientation.Horizontal)
+        self.vertical_scrollbar = QScrollBar(Qt.Orientation.Vertical)
+        
+        # Conectar las barras de desplazamiento con el editor
+        self.horizontal_scrollbar.valueChanged.connect(self.horizontal_scroll_changed)
+        self.vertical_scrollbar.valueChanged.connect(self.vertical_scroll_changed)
+        
+        # Conectar los eventos de desplazamiento del editor a las barras
+        self.horizontalScrollBar().valueChanged.connect(self.update_horizontal_scrollbar)
+        self.verticalScrollBar().valueChanged.connect(self.update_vertical_scrollbar)
+
+    def set_main_window(self, main_window):
+        self.main_window = main_window
+
+    def update_cursor_position(self):
+        if self.main_window:
+            cursor = self.textCursor()
+            line_number = cursor.blockNumber() + 1
+            column_number = cursor.columnNumber() + 1
+            self.main_window.update_line_status(line_number, column_number)
+    
+    def horizontal_scroll_changed(self, value):
+        # Actualizar la posición de desplazamiento horizontal del editor
+        self.horizontalScrollBar().setValue(value)
+    
+    def vertical_scroll_changed(self, value):
+        # Actualizar la posición de desplazamiento vertical del editor
+        self.verticalScrollBar().setValue(value)
+    
+    def update_horizontal_scrollbar(self, value):
+        # Actualizar la barra de desplazamiento horizontal externa
+        self.horizontal_scrollbar.setValue(value)
+    
+    def update_vertical_scrollbar(self, value):
+        # Actualizar la barra de desplazamiento vertical externa
+        self.vertical_scrollbar.setValue(value)
+    
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Actualizar los rangos de las barras de desplazamiento
+        self.update_scrollbar_ranges()
+        
+        cr = self.contentsRect()
+        self.line_number_area.setGeometry(QRect(cr.left(), cr.top(), self.line_number_area_width(), cr.height()))
+    
+    def update_scrollbar_ranges(self):
+        # Actualizar el rango de la barra de desplazamiento horizontal
+        h_scrollbar = self.horizontalScrollBar()
+        self.horizontal_scrollbar.setRange(h_scrollbar.minimum(), h_scrollbar.maximum())
+        self.horizontal_scrollbar.setPageStep(h_scrollbar.pageStep())
+        self.horizontal_scrollbar.setSingleStep(h_scrollbar.singleStep())
+        
+        # Actualizar el rango de la barra de desplazamiento vertical
+        v_scrollbar = self.verticalScrollBar()
+        self.vertical_scrollbar.setRange(v_scrollbar.minimum(), v_scrollbar.maximum())
+        self.vertical_scrollbar.setPageStep(v_scrollbar.pageStep())
+        self.vertical_scrollbar.setSingleStep(v_scrollbar.singleStep())
 
     def line_number_area_width(self):
         digits = 1
@@ -58,11 +121,6 @@ class CodeEditor(QPlainTextEdit):
         
         if rect.contains(self.viewport().rect()):
             self.update_line_number_area_width(0)
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        cr = self.contentsRect()
-        self.line_number_area.setGeometry(QRect(cr.left(), cr.top(), self.line_number_area_width(), cr.height()))
 
     def highlight_current_line(self):
         extra_selections = []
@@ -104,6 +162,8 @@ class CodeEditor(QPlainTextEdit):
 
     def setText(self, text):
         super().setPlainText(text)
+        # Actualizar los rangos de las barras de desplazamiento después de establecer el texto
+        self.update_scrollbar_ranges()
 
 
 class CompilerIDE(QMainWindow):
@@ -120,12 +180,15 @@ class CompilerIDE(QMainWindow):
         self.setStatusBar(status_bar)
         self.status_label = QLabel("Listo")
         status_bar.addWidget(self.status_label, 1)
+    
+        self.cursor_position_label = QLabel("Línea: 0    Columna: 0")
+        status_bar.addPermanentWidget(self.cursor_position_label)
         
         menu_bar = self.menuBar()
         menu_bar.setStyleSheet("QMenuBar { background-color: #f0f0f0; }")
         
         file_menu = menu_bar.addMenu("Archivo")
-        
+        #file_menu.setStyleSheet("QMenu { background-color: #ffffff; border: 1px solid #cccccc; }")
         
         self.new_action = QAction("Nuevo", self)
         self.open_action = QAction("Abrir", self)
@@ -233,8 +296,40 @@ class CompilerIDE(QMainWindow):
         self.container = QWidget()
         self.setCentralWidget(self.container)
     
+    def update_line_status(self, line, column):
+        self.cursor_position_label.setText(f"Línea: {line}   Columna: {column}")
+    
     def load_editor(self):
-        self.text_edit = CodeEditor()  
+        self.text_edit = CodeEditor()
+        self.text_edit.set_main_window(self)  # Set reference to main window
+        
+        # Crear un contenedor para el editor y las barras de desplazamiento
+        editor_container = QWidget()
+        editor_layout = QVBoxLayout(editor_container)
+        editor_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Añadir el layout horizontal para el editor y la barra vertical
+        h_layout = QHBoxLayout()
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_layout.setSpacing(0)
+        
+        h_layout.addWidget(self.text_edit)
+        h_layout.addWidget(self.text_edit.vertical_scrollbar)
+        
+        editor_layout.addLayout(h_layout)
+        editor_layout.addWidget(self.text_edit.horizontal_scrollbar)
+        
+        # Configurar las barras de desplazamiento
+        self.text_edit.vertical_scrollbar.setStyleSheet("QScrollBar { width: 16px; }")
+        self.text_edit.horizontal_scrollbar.setStyleSheet("QScrollBar { height: 16px; }")
+        
+        # Ocultar las barras de desplazamiento nativas del QPlainTextEdit
+        self.text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        
+        # Inicializar los rangos de las barras de desplazamiento
+        self.text_edit.update_scrollbar_ranges()
+        
         self.tabs = QTabWidget()
         self.tabs.addTab(QLabel("Salida Léxica"), "Léxico")
         self.tabs.addTab(QLabel("Salida Sintáctica"), "Sintáctico")
@@ -257,7 +352,7 @@ class CompilerIDE(QMainWindow):
             label.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         top_splitter = QSplitter(Qt.Orientation.Horizontal)
-        top_splitter.addWidget(self.text_edit)
+        top_splitter.addWidget(editor_container)  # Usar el contenedor del editor en lugar de text_edit directamente
         top_splitter.addWidget(self.tabs)
         top_splitter.setSizes([600, 600])
 
@@ -272,6 +367,9 @@ class CompilerIDE(QMainWindow):
         self.container = QWidget()
         self.container.setLayout(main_layout)
         self.setCentralWidget(self.container)
+        
+        # Initialize cursor position
+        self.text_edit.update_cursor_position()
     
     def new_file(self):
         self.load_editor()
@@ -283,14 +381,14 @@ class CompilerIDE(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Abrir Archivo", "", "Archivos de Texto (*.txt);;Todos los Archivos (*)")
         if file_name:
             self.load_editor()
-            with open(file_name, "r", encoding="utf-8") as file:
+            with open(file_name, "r", encoding="utf-8", errors="replace") as file:
                 self.text_edit.setText(file.read())
             self.current_file = file_name
             self.status_label.setText(f"Archivo abierto: {os.path.basename(file_name)}")
     
     def save_file(self):
         if self.current_file:
-            with open(self.current_file, "w", encoding="utf-8") as file:
+            with open(self.current_file, "w", encoding="utf-8", errors="replace") as file:
                 file.write(self.text_edit.toPlainText())
             self.status_label.setText(f"Guardado: {os.path.basename(self.current_file)}")
         else:
@@ -299,7 +397,7 @@ class CompilerIDE(QMainWindow):
     def save_file_as(self):
         file_name, _ = QFileDialog.getSaveFileName(self, "Guardar Archivo", "", "Archivos de Texto (*.txt);;Todos los Archivos (*)")
         if file_name:
-            with open(file_name, "w", encoding="utf-8") as file:
+            with open(file_name, "w", encoding="utf-8", errors="replace") as file:
                 file.write(self.text_edit.toPlainText())
             self.current_file = file_name
             self.status_label.setText(f"Guardado como: {os.path.basename(file_name)}")
@@ -308,6 +406,7 @@ class CompilerIDE(QMainWindow):
         self.setCentralWidget(QWidget())
         self.current_file = None
         self.status_label.setText("Archivo cerrado")
+        self.cursor_position_label.setText("Línea: 1     Columna: 1")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -324,12 +423,41 @@ if __name__ == "__main__":
             font-family: Consolas;
             font-size:12pt;
         }
+        QScrollBar:vertical {
+            border: 1px solid #999999;
+            background: white;
+            width: 16px;
+            margin: 0px 0px 0px 0px;
+        }
+        QScrollBar:horizontal {
+            border: 1px solid #999999;
+            background: white;
+            height: 16px;
+            margin: 0px 0px 0px 0px;
+        }
+        QScrollBar::handle:vertical {
+            background: #c1c1c1;
+            min-height: 20px;
+            border-radius: 2px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #c1c1c1;
+            min-width: 20px;
+            border-radius: 2px;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            border: none;
+            background: none;
+        }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+            background: none;
+        }
     """)
+    
     app.setFont(font)
 
     window = CompilerIDE()
     window.show()
     sys.exit(app.exec())
-
-
-    
