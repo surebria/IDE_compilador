@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
-    QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout
+    QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar
 )
-from PyQt6.QtGui import QAction, QColor, QPainter, QTextFormat, QFontMetrics
+from PyQt6.QtGui import QAction, QColor, QPainter, QTextFormat, QFontMetrics, QIcon
 from PyQt6.QtCore import QRect, Qt, QSize, pyqtSlot
 import sys
+import os
 
 class LineNumberArea(QWidget):
     def __init__(self, editor):
@@ -116,23 +117,45 @@ class CompilerIDE(QMainWindow):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu("Archivo")
         
-        new_action = QAction("Nuevo", self)
-        open_action = QAction("Abrir", self)
-        save_action = QAction("Guardar", self)
-        save_as_action = QAction("Guardar como", self)
-        close_action = QAction("Cerrar", self)
+        # Crear acciones
+        self.new_action = QAction("Nuevo", self)
+        self.open_action = QAction("Abrir", self)
+        self.save_action = QAction("Guardar", self)
+        self.save_as_action = QAction("Guardar como", self)
+        self.close_action = QAction("Cerrar", self)
         
-        new_action.triggered.connect(self.new_file)
-        open_action.triggered.connect(self.open_file)
-        save_action.triggered.connect(self.save_file)
-        save_as_action.triggered.connect(self.save_file_as)
-        close_action.triggered.connect(self.close_file)
         
-        file_menu.addAction(new_action)
-        file_menu.addAction(open_action)
-        file_menu.addAction(save_action)
-        file_menu.addAction(save_as_action)
-        file_menu.addAction(close_action)
+        icon_path = "icons/"  
+        self.new_action.setIcon(QIcon(os.path.join(icon_path, "new.png")))
+        self.open_action.setIcon(QIcon(os.path.join(icon_path, "open.png")))
+        self.save_action.setIcon(QIcon(os.path.join(icon_path, "save.png")))
+        self.save_as_action.setIcon(QIcon(os.path.join(icon_path, "save_as.png")))
+        self.close_action.setIcon(QIcon(os.path.join(icon_path, "close.png")))
+        
+        # Conectar acciones con funciones
+        self.new_action.triggered.connect(self.new_file)
+        self.open_action.triggered.connect(self.open_file)
+        self.save_action.triggered.connect(self.save_file)
+        self.save_as_action.triggered.connect(self.save_file_as)
+        self.close_action.triggered.connect(self.close_file)
+        
+        # Agregar acciones al menú de archivo
+        file_menu.addAction(self.new_action)
+        file_menu.addAction(self.open_action)
+        file_menu.addAction(self.save_action)
+        file_menu.addAction(self.save_as_action)
+        file_menu.addAction(self.close_action)
+        
+        # Crear barra de herramientas
+        self.toolbar = QToolBar("Barra de Herramientas")
+        self.addToolBar(self.toolbar)
+        
+        # Agregar acciones a la barra de herramientas
+        self.toolbar.addAction(self.new_action)
+        self.toolbar.addAction(self.open_action)
+        self.toolbar.addAction(self.save_action)
+        self.toolbar.addAction(self.save_as_action)
+        self.toolbar.addAction(self.close_action)
         
         # Contenedor inicial vacío
         self.container = QWidget()
@@ -175,6 +198,7 @@ class CompilerIDE(QMainWindow):
         self.load_editor()
         self.text_edit.clear()
         self.current_file = None
+        self.status_label.setText("Nuevo archivo creado")
     
     def open_file(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Abrir Archivo", "", "Archivos de Texto (*.txt);;Todos los Archivos (*)")
@@ -183,12 +207,13 @@ class CompilerIDE(QMainWindow):
             with open(file_name, "r", encoding="utf-8") as file:
                 self.text_edit.setText(file.read())
             self.current_file = file_name
+            self.status_label.setText(f"Archivo abierto: {os.path.basename(file_name)}")
     
     def save_file(self):
         if self.current_file:
             with open(self.current_file, "w", encoding="utf-8") as file:
                 file.write(self.text_edit.toPlainText())
-            self.status_label.setText("Guardado")
+            self.status_label.setText(f"Guardado: {os.path.basename(self.current_file)}")
         else:
             self.save_file_as()
     
@@ -198,11 +223,12 @@ class CompilerIDE(QMainWindow):
             with open(file_name, "w", encoding="utf-8") as file:
                 file.write(self.text_edit.toPlainText())
             self.current_file = file_name
-            self.status_label.setText("Guardado")
+            self.status_label.setText(f"Guardado como: {os.path.basename(file_name)}")
     
     def close_file(self):
         self.setCentralWidget(QWidget())
         self.current_file = None
+        self.status_label.setText("Archivo cerrado")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
