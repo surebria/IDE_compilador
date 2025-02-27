@@ -52,6 +52,9 @@ class CodeEditor(QPlainTextEdit):
         # Conectar los eventos de desplazamiento del editor a las barras
         self.horizontalScrollBar().valueChanged.connect(self.update_horizontal_scrollbar)
         self.verticalScrollBar().valueChanged.connect(self.update_vertical_scrollbar)
+        
+        # Para asegurar que los saltos de línea se contabilicen correctamente
+        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
     def set_main_window(self, main_window):
         self.main_window = main_window
@@ -59,6 +62,7 @@ class CodeEditor(QPlainTextEdit):
     def update_cursor_position(self):
         if self.main_window:
             cursor = self.textCursor()
+            # Obtener el número de línea real basado en la posición del cursor
             line_number = cursor.blockNumber() + 1
             column_number = cursor.columnNumber() + 1
             self.main_window.update_line_status(line_number, column_number)
@@ -163,6 +167,14 @@ class CodeEditor(QPlainTextEdit):
     def setText(self, text):
         super().setPlainText(text)
         # Actualizar los rangos de las barras de desplazamiento después de establecer el texto
+        self.update_scrollbar_ranges()
+        
+    # Sobreescribir el método keyPressEvent para asegurar que se actualizan las líneas correctamente
+    def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+        # Actualizar explícitamente la posición del cursor después de cada pulsación de tecla
+        self.update_cursor_position()
+        # Actualizar los rangos de las barras de desplazamiento
         self.update_scrollbar_ranges()
 
 
@@ -307,6 +319,7 @@ class CompilerIDE(QMainWindow):
         editor_container = QWidget()
         editor_layout = QVBoxLayout(editor_container)
         editor_layout.setContentsMargins(0, 0, 0, 0)
+        editor_layout.setSpacing(0)
         
         # Añadir el layout horizontal para el editor y la barra vertical
         h_layout = QHBoxLayout()
