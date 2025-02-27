@@ -1,9 +1,7 @@
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QTextEdit, QMenuBar, QMenu, QVBoxLayout, 
-    QWidget, QPushButton, QFileDialog, QTabWidget
+    QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QPushButton, QTabWidget, QSplitter, QToolBar
 )
-from PyQt6.QtGui import QAction  
-
+from PyQt6.QtGui import QAction
 import sys
 
 class CompilerIDE(QMainWindow):
@@ -15,72 +13,52 @@ class CompilerIDE(QMainWindow):
         self.initUI()
     
     def initUI(self):
+        # Crear barra de herramientas
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("Archivo")
+        
+        new_action = QAction("Nuevo", self)
+        open_action = QAction("Abrir", self)
+        save_action = QAction("Guardar", self)
+        save_as_action = QAction("Guardar como", self)
+        
+        file_menu.addAction(new_action)
+        file_menu.addAction(open_action)
+        file_menu.addAction(save_action)
+        file_menu.addAction(save_as_action)
+        
         # Editor de texto
-        self.text_edit = QTextEdit(self)
+        self.text_edit = QTextEdit()
         self.text_edit.setPlaceholderText("Escriba aquí...")
         
-        # Crear Tabs para fases del compilador
+        # Sección de análisis del compilador
         self.tabs = QTabWidget()
         self.tabs.addTab(QTextEdit(), "Léxico")
         self.tabs.addTab(QTextEdit(), "Sintáctico")
         self.tabs.addTab(QTextEdit(), "Semántico")
+        self.tabs.addTab(QTextEdit(), "Hash Table")
         self.tabs.addTab(QTextEdit(), "Código Intermedio")
-        self.tabs.addTab(QTextEdit(), "Ejecución")
         
-        # Botones de acción
-        self.compile_button = QPushButton("Compilar")
-        self.lexical_button = QPushButton("Análisis Léxico")
-        self.syntax_button = QPushButton("Análisis Sintáctico")
-        self.semantic_button = QPushButton("Análisis Semántico")
-        self.intermediate_button = QPushButton("Código Intermedio")
-        self.execute_button = QPushButton("Ejecutar")
+        # Consola de errores y resultados
+        self.errors_tabs = QTabWidget()
+        self.errors_tabs.addTab(QTextEdit(), "Errores Léxicos")
+        self.errors_tabs.addTab(QTextEdit(), "Errores Sintácticos")
+        self.errors_tabs.addTab(QTextEdit(), "Errores Semánticos")
+        self.errors_tabs.addTab(QTextEdit(), "Resultados")
         
-        # Layout principal
-        layout = QVBoxLayout()
-        layout.addWidget(self.text_edit)
-        layout.addWidget(self.tabs)
-        layout.addWidget(self.compile_button)
-        layout.addWidget(self.lexical_button)
-        layout.addWidget(self.syntax_button)
-        layout.addWidget(self.semantic_button)
-        layout.addWidget(self.intermediate_button)
-        layout.addWidget(self.execute_button)
+        # Layout con QSplitter
+        splitter = QSplitter()
+        splitter.addWidget(self.text_edit)
+        splitter.addWidget(self.tabs)
+        splitter.setSizes([300, 600])
+        
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(splitter)
+        main_layout.addWidget(self.errors_tabs)
         
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(main_layout)
         self.setCentralWidget(container)
-        
-        # Menú
-        self.createMenu()
-    
-    def createMenu(self):
-        menu_bar = self.menuBar()
-        file_menu = menu_bar.addMenu("File")
-        compile_menu = menu_bar.addMenu("Compilar")
-        
-        # Acciones del menú
-        open_action = QAction("Abrir", self)
-        save_action = QAction("Guardar", self)
-        save_as_action = QAction("Guardar como", self)
-        close_action = QAction("Cerrar", self)
-        
-        lex_action = QAction("Análisis Léxico", self)
-        syn_action = QAction("Análisis Sintáctico", self)
-        sem_action = QAction("Análisis Semántico", self)
-        int_action = QAction("Código Intermedio", self)
-        exe_action = QAction("Ejecutar", self)
-        
-        # Agregar acciones al menú
-        file_menu.addAction(open_action)
-        file_menu.addAction(save_action)
-        file_menu.addAction(save_as_action)
-        file_menu.addAction(close_action)
-        
-        compile_menu.addAction(lex_action)
-        compile_menu.addAction(syn_action)
-        compile_menu.addAction(sem_action)
-        compile_menu.addAction(int_action)
-        compile_menu.addAction(exe_action)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
