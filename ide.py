@@ -313,17 +313,18 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     font = QFont("Courier New", 11) 
+    
     app.setStyleSheet("""
-    QLabel {
-        background-color: white;
-        font-family: Courier New;
-        font-size:10pt;
-    }
-    QPlainTextEdit{
-        font-family: Consolas;
-        font-size:12pt;
-    }
-""")
+        QLabel {
+            background-color: white;
+            font-family: Courier New;
+            font-size:10pt;
+        }
+        QPlainTextEdit{
+            font-family: Consolas;
+            font-size:12pt;
+        }
+    """)
     app.setFont(font)
 
     window = CompilerIDE()
