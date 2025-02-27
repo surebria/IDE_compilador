@@ -143,30 +143,37 @@ class CompilerIDE(QMainWindow):
         self.statusBar().addWidget(self.status_label)
     
     def load_editor(self):
-        self.text_edit = CodeEditor()  # Using our custom CodeEditor instead of QTextEdit
-        
+        self.text_edit = CodeEditor()  # Editor de código con numeración de líneas
+
         self.tabs = QTabWidget()
         self.tabs.addTab(QTextEdit(), "Léxico")
         self.tabs.addTab(QTextEdit(), "Sintáctico")
         self.tabs.addTab(QTextEdit(), "Semántico")
         self.tabs.addTab(QTextEdit(), "Hash Table")
         self.tabs.addTab(QTextEdit(), "Código Intermedio")
-        
+
         self.errors_tabs = QTabWidget()
         self.errors_tabs.addTab(QTextEdit(), "Errores Léxicos")
         self.errors_tabs.addTab(QTextEdit(), "Errores Sintácticos")
         self.errors_tabs.addTab(QTextEdit(), "Errores Semánticos")
         self.errors_tabs.addTab(QTextEdit(), "Resultados")
-        
-        splitter = QSplitter()
-        splitter.addWidget(self.text_edit)
-        splitter.addWidget(self.tabs)
-        splitter.setSizes([300, 600])
-        
+
+        # Splitter horizontal: divide el editor y las pestañas de análisis
+        top_splitter = QSplitter(Qt.Orientation.Horizontal)
+        top_splitter.addWidget(self.text_edit)
+        top_splitter.addWidget(self.tabs)
+        top_splitter.setSizes([600, 600])  # Más espacio para el editor
+
+        # Splitter vertical: divide el contenido superior y la sección de errores
+        main_splitter = QSplitter(Qt.Orientation.Vertical)
+        main_splitter.addWidget(top_splitter)
+        main_splitter.addWidget(self.errors_tabs)
+        main_splitter.setSizes([400, 250])  # Más espacio arriba, menos para errores
+
+        # Layout principal
         main_layout = QVBoxLayout()
-        main_layout.addWidget(splitter)
-        main_layout.addWidget(self.errors_tabs)
-        
+        main_layout.addWidget(main_splitter)
+
         self.container = QWidget()
         self.container.setLayout(main_layout)
         self.setCentralWidget(self.container)
