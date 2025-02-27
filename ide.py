@@ -7,6 +7,9 @@ from PyQt6.QtCore import QRect, Qt, QSize, pyqtSlot
 import sys
 import os
 
+
+from PyQt6.QtGui import QFont
+
 class LineNumberArea(QWidget):
     def __init__(self, editor):
         super().__init__(editor)
@@ -66,7 +69,7 @@ class CodeEditor(QPlainTextEdit):
         
         if not self.isReadOnly():
             selection = QTextEdit.ExtraSelection()
-            line_color = QColor(Qt.GlobalColor.lightGray).lighter(130)
+            line_color = QColor("#e3f5f7")
             selection.format.setBackground(line_color)
             selection.format.setProperty(QTextFormat.Property.FullWidthSelection, True)
             selection.cursor = self.textCursor()
@@ -108,26 +111,22 @@ class CompilerIDE(QMainWindow):
         super().__init__()
         self.setWindowTitle("Compilador IDE")
         self.setGeometry(100, 100, 1000, 700)
-        self.current_file = None  # Almacena el archivo actual
+        self.current_file = None
         
         self.initUI()
     
     def initUI(self):
-        # Configurar barra de estado con mejor diseño
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
         self.status_label = QLabel("Listo")
         status_bar.addWidget(self.status_label, 1)
         
-        # Crear barra de menú con estilo
         menu_bar = self.menuBar()
         menu_bar.setStyleSheet("QMenuBar { background-color: #f0f0f0; }")
         
-        # Menú Archivo
         file_menu = menu_bar.addMenu("Archivo")
         file_menu.setStyleSheet("QMenu { background-color: #ffffff; border: 1px solid #cccccc; }")
         
-        # Crear acciones para Archivo
         self.new_action = QAction("Nuevo", self)
         self.open_action = QAction("Abrir", self)
         self.save_action = QAction("Guardar", self)
@@ -135,17 +134,14 @@ class CompilerIDE(QMainWindow):
         self.close_action = QAction("Cerrar", self)
         self.exit_action = QAction("Salir", self)
         
-        # Asignar iconos solo para la barra de herramientas
-        icon_path = "icons/"  # Cambia esto a la ruta real donde están tus iconos
-        
-        # Crear copias de las acciones sin iconos para los menús
+        icon_path = "icons/" 
+   
         self.new_action_toolbar = QAction(QIcon(os.path.join(icon_path, "new.png")), "Nuevo", self)
         self.open_action_toolbar = QAction(QIcon(os.path.join(icon_path, "open.png")), "Abrir", self)
         self.save_action_toolbar = QAction(QIcon(os.path.join(icon_path, "save.png")), "Guardar", self)
         self.save_as_action_toolbar = QAction(QIcon(os.path.join(icon_path, "save_as.png")), "Guardar como", self)
         self.close_action_toolbar = QAction(QIcon(os.path.join(icon_path, "close.png")), "Cerrar", self)
         
-        # Conectar acciones del menú con funciones
         self.new_action.triggered.connect(self.new_file)
         self.open_action.triggered.connect(self.open_file)
         self.save_action.triggered.connect(self.save_file)
@@ -153,14 +149,12 @@ class CompilerIDE(QMainWindow):
         self.close_action.triggered.connect(self.close_file)
         self.exit_action.triggered.connect(self.close)
         
-        # Conectar acciones de la barra de herramientas con funciones
         self.new_action_toolbar.triggered.connect(self.new_file)
         self.open_action_toolbar.triggered.connect(self.open_file)
         self.save_action_toolbar.triggered.connect(self.save_file)
         self.save_as_action_toolbar.triggered.connect(self.save_file_as)
         self.close_action_toolbar.triggered.connect(self.close_file)
         
-        # Agregar acciones al menú Archivo con separadores
         file_menu.addAction(self.new_action)
         file_menu.addSeparator()
         file_menu.addAction(self.open_action)
@@ -172,33 +166,28 @@ class CompilerIDE(QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(self.exit_action)
         
-        # Crear menús adicionales
         lexico_menu = menu_bar.addMenu("Léxico")
         sintactico_menu = menu_bar.addMenu("Sintáctico")
         semantico_menu = menu_bar.addMenu("Semántico")
         
-        # Menú Léxico
         analizar_lexico_action = QAction("Analizar", self)
         ver_tokens_action = QAction("Ver Tokens", self)
         lexico_menu.addAction(analizar_lexico_action)
         lexico_menu.addSeparator()
         lexico_menu.addAction(ver_tokens_action)
         
-        # Menú Sintáctico
         analizar_sintactico_action = QAction("Analizar", self)
         ver_ast_action = QAction("Ver Árbol Sintáctico", self)
         sintactico_menu.addAction(analizar_sintactico_action)
         sintactico_menu.addSeparator()
         sintactico_menu.addAction(ver_ast_action)
         
-        # Menú Semántico
         analizar_semantico_action = QAction("Analizar", self)
         ver_tabla_simbolos_action = QAction("Ver Tabla de Símbolos", self)
         semantico_menu.addAction(analizar_semantico_action)
         semantico_menu.addSeparator()
         semantico_menu.addAction(ver_tabla_simbolos_action)
-        
-        # Menú Compilar
+  
         compilar_menu = menu_bar.addMenu("Compilar")
         compilar_action = QAction("Compilar", self)
         compilar_todo_action = QAction("Compilar Todo", self)
@@ -207,8 +196,7 @@ class CompilerIDE(QMainWindow):
         compilar_menu.addAction(compilar_todo_action)
         compilar_menu.addSeparator()
         compilar_menu.addAction(ver_codigo_intermedio_action)
-        
-        # Menú Ejecutar
+    
         ejecutar_menu = menu_bar.addMenu("Ejecutar")
         ejecutar_action = QAction("Ejecutar", self)
         ejecutar_paso_a_paso_action = QAction("Ejecutar Paso a Paso", self)
@@ -216,22 +204,19 @@ class CompilerIDE(QMainWindow):
         ejecutar_menu.addSeparator()
         ejecutar_menu.addAction(ejecutar_paso_a_paso_action)
         
-        # Crear barra de herramientas con estilo
         self.toolbar = QToolBar("Barra de Herramientas")
         self.toolbar.setStyleSheet("QToolBar { background-color: #e0e0e0; border: 1px solid #cccccc; spacing: 3px; }")
         self.toolbar.setMovable(False)  
         self.toolbar.setIconSize(QSize(24, 24))  
         self.addToolBar(self.toolbar)
-        
-        # Agregar acciones a la barra de herramientas
+  
         self.toolbar.addAction(self.new_action_toolbar)
         self.toolbar.addAction(self.open_action_toolbar)
         self.toolbar.addAction(self.save_action_toolbar)
         self.toolbar.addAction(self.save_as_action_toolbar)
         self.toolbar.addAction(self.close_action_toolbar)
         self.toolbar.addSeparator()
-        
-        # Añadir acciones de compilar y ejecutar a la barra de herramientas
+  
         compile_icon = QIcon(os.path.join(icon_path, "compiler.png")) if os.path.exists(os.path.join(icon_path, "compiler.png")) else QIcon()
         execute_icon = QIcon(os.path.join(icon_path, "execute.png")) if os.path.exists(os.path.join(icon_path, "execute.png")) else QIcon()
         
@@ -244,37 +229,46 @@ class CompilerIDE(QMainWindow):
         self.toolbar.addAction(compile_action_toolbar)
         self.toolbar.addAction(execute_action_toolbar)
         
-        # Contenedor inicial vacío
+  
         self.container = QWidget()
         self.setCentralWidget(self.container)
     
     def load_editor(self):
         self.text_edit = CodeEditor()  
-        
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("QTabWidget::pane { border: 1px solid #cccccc; } QTabBar::tab { background-color: #e0e0e0; padding: 5px; } QTabBar::tab:selected { background-color: #f0f0f0; }")
-        self.tabs.addTab(QTextEdit(), "Léxico")
-        self.tabs.addTab(QTextEdit(), "Sintáctico")
-        self.tabs.addTab(QTextEdit(), "Semántico")
-        self.tabs.addTab(QTextEdit(), "Hash Table")
-        self.tabs.addTab(QTextEdit(), "Código Intermedio")
-        
+        self.tabs.addTab(QLabel("Salida Léxica"), "Léxico")
+        self.tabs.addTab(QLabel("Salida Sintáctica"), "Sintáctico")
+        self.tabs.addTab(QLabel("Salida Semántica"), "Semántico")
+        self.tabs.addTab(QLabel("Hash Table Resultados"), "Hash Table")
+        self.tabs.addTab(QLabel("Código Intermedio Resultados"), "Código Intermedio")
+
+        for i in range(self.tabs.count()):
+            label = self.tabs.widget(i)
+            label.setAlignment(Qt.AlignmentFlag.AlignTop)
+
         self.errors_tabs = QTabWidget()
-        self.errors_tabs.setStyleSheet("QTabWidget::pane { border: 1px solid #cccccc; } QTabBar::tab { background-color: #e0e0e0; padding: 5px; } QTabBar::tab:selected { background-color: #f0f0f0; }")
-        self.errors_tabs.addTab(QTextEdit(), "Errores Léxicos")
-        self.errors_tabs.addTab(QTextEdit(), "Errores Sintácticos")
-        self.errors_tabs.addTab(QTextEdit(), "Errores Semánticos")
-        self.errors_tabs.addTab(QTextEdit(), "Resultados")
+        self.errors_tabs.addTab(QLabel("Errores Léxicos"), "Errores Léxicos")
+        self.errors_tabs.addTab(QLabel("Errores Sintácticos"), "Errores Sintácticos")
+        self.errors_tabs.addTab(QLabel("Errores Semánticos"), "Errores Semánticos")
+        self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
         
-        splitter = QSplitter()
-        splitter.addWidget(self.text_edit)
-        splitter.addWidget(self.tabs)
-        splitter.setSizes([300, 600])
-        
+        for i in range(self.errors_tabs.count()):
+            label = self.errors_tabs.widget(i)
+            label.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        top_splitter = QSplitter(Qt.Orientation.Horizontal)
+        top_splitter.addWidget(self.text_edit)
+        top_splitter.addWidget(self.tabs)
+        top_splitter.setSizes([600, 600])
+
+        main_splitter = QSplitter(Qt.Orientation.Vertical)
+        main_splitter.addWidget(top_splitter)
+        main_splitter.addWidget(self.errors_tabs)
+        main_splitter.setSizes([400, 250]) 
+
         main_layout = QVBoxLayout()
-        main_layout.addWidget(splitter)
-        main_layout.addWidget(self.errors_tabs)
-        
+        main_layout.addWidget(main_splitter)
+
         self.container = QWidget()
         self.container.setLayout(main_layout)
         self.setCentralWidget(self.container)
@@ -317,7 +311,24 @@ class CompilerIDE(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")  
+
+    font = QFont("Courier New", 11) 
+    app.setStyleSheet("""
+    QLabel {
+        background-color: white;
+        font-family: Courier New;
+        font-size:10pt;
+    }
+    QPlainTextEdit{
+        font-family: Consolas;
+        font-size:12pt;
+    }
+""")
+    app.setFont(font)
+
     window = CompilerIDE()
     window.show()
     sys.exit(app.exec())
+
+
+    
