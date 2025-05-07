@@ -9,6 +9,9 @@ import os
 
 
 from PyQt6.QtGui import QFont
+from logic import HighlightSyntax
+from logic import analizador_lexico, Token
+
 
 class LineNumberArea(QWidget):
     def __init__(self, editor):
@@ -26,7 +29,9 @@ class CodeEditor(QPlainTextEdit):
     def __init__(self):
         super().__init__()
         self.line_number_area = LineNumberArea(self)
-        
+
+        self.highlighter = HighlightSyntax(self.document())
+
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
         self.cursorPositionChanged.connect(self.highlight_current_line)
@@ -34,9 +39,6 @@ class CodeEditor(QPlainTextEdit):
         
         self.update_line_number_area_width(0)
         self.highlight_current_line()
-        
-        # Setting placeholder text
-        self.setPlaceholderText("Escriba aquí...")
         
         # Reference to main window for status updates
         self.main_window = None
@@ -160,6 +162,7 @@ class CodeEditor(QPlainTextEdit):
             top = bottom
             bottom = top + round(self.blockBoundingRect(block).height())
             block_number += 1
+            
 
     def toPlainText(self):
         return super().toPlainText()
@@ -186,7 +189,31 @@ class CompilerIDE(QMainWindow):
         self.current_file = None
         
         self.initUI()
-    
+
+    def ejecutar_analisis_lexico(self):
+        if not hasattr(self, 'text_edit') or self.text_edit is None:
+            return
+
+        texto = self.text_edit.toPlainText()
+        tokens = analizador_lexico(texto)
+
+        salida = "=== TOKENS ===\n"
+        salida_errores = "=== ERRORES ===\n"
+
+        for token in tokens:
+            if token.tipo== 'ERROR': 
+                salida_errores += f"{token}\n"
+            else:
+                salida += f"{token}\n"
+
+        self.lexico_output.setPlainText(salida)
+        self.tabs.setCurrentWidget(self.lexico_output)
+
+        self.error_lexico.setPlainText(salida_errores)
+        self.errors_tabs.setCurrentWidget(self.lexico_output)
+
+
+
     def initUI(self):
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
@@ -244,10 +271,14 @@ class CompilerIDE(QMainWindow):
         lexico_menu = menu_bar.addMenu("Léxico")
         sintactico_menu = menu_bar.addMenu("Sintáctico")
         semantico_menu = menu_bar.addMenu("Semántico")
-        
+
         analizar_lexico_action = QAction("Analizar", self)
+        analizar_lexico_action.triggered.connect(self.ejecutar_analisis_lexico)
+
+        #analizar_lexico_action = QAction("Analizar", self)
         ver_tokens_action = QAction("Ver Tokens", self)
         lexico_menu.addAction(analizar_lexico_action)
+
         lexico_menu.addSeparator()
         lexico_menu.addAction(ver_tokens_action)
         
@@ -265,6 +296,7 @@ class CompilerIDE(QMainWindow):
   
         compilar_menu = menu_bar.addMenu("Compilar")
         compilar_action = QAction("Compilar", self)
+
         compilar_todo_action = QAction("Compilar Todo", self)
         ver_codigo_intermedio_action = QAction("Ver Código Intermedio", self)
         compilar_menu.addAction(compilar_action)
@@ -344,7 +376,11 @@ class CompilerIDE(QMainWindow):
         self.text_edit.update_scrollbar_ranges()
         
         self.tabs = QTabWidget()
-        self.tabs.addTab(QLabel("Salida Léxica"), "Léxico")
+        #self.tabs.addTab(QLabel("Salida Léxica"), "Léxico")
+        self.lexico_output = QTextEdit()
+        self.lexico_output.setReadOnly(True)
+        self.tabs.addTab(self.lexico_output, "Léxico")
+
         self.tabs.addTab(QLabel("Salida Sintáctica"), "Sintáctico")
         self.tabs.addTab(QLabel("Salida Semántica"), "Semántico")
         self.tabs.addTab(QLabel("Hash Table Resultados"), "Hash Table")
@@ -355,7 +391,12 @@ class CompilerIDE(QMainWindow):
             label.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.errors_tabs = QTabWidget()
-        self.errors_tabs.addTab(QLabel("Errores Léxicos"), "Errores Léxicos")
+
+        self.error_lexico = QTextEdit()
+        self.error_lexico.setReadOnly(True)
+        self.errors_tabs.addTab(self.error_lexico, "Errores Léxicos")
+
+        #self.errors_tabs.addTab(QLabel("Errores Léxicos"), "Errores Léxicos")
         self.errors_tabs.addTab(QLabel("Errores Sintácticos"), "Errores Sintácticos")
         self.errors_tabs.addTab(QLabel("Errores Semánticos"), "Errores Semánticos")
         self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
@@ -423,9 +464,7 @@ class CompilerIDE(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    font = QFont("Courier New", 11) 
-    
+    font = QFont("Courier New", 11)
     app.setStyleSheet("""
         QLabel {
             background-color: white;
