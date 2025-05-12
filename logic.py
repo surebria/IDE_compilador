@@ -7,7 +7,6 @@ class HighlightSyntax(QSyntaxHighlighter):
         super().__init__(document)
         self.highlightingRules = []
 
-        # Números enteros y reales
         numberFormat = QTextCharFormat()
         numberFormat.setForeground(QColor("#9c7692"))
         numberPattern = QRegularExpression(r"(?<![0-9)])[+-]?\d+(\.\d+)?")
@@ -351,13 +350,11 @@ def analizador_lexico(texto):
                 tokens.append(Token('ERROR', '|', linea, inicio_col))
             continue
 
-        # Caracteres especiales
         if char in ['(', ')', '{', '}', '[', ']', ';', ',', ':', '%']:
             tokens.append(Token('ESPECIAL', char, linea, inicio_col))
             avanzar()
             continue
 
-        # Error: carácter no reconocido
         tokens.append(Token('ERROR', char, linea, columna))
         avanzar()
 
