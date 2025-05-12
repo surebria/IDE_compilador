@@ -208,8 +208,8 @@ class CompilerIDE(QMainWindow):
         texto = self.text_edit.toPlainText()
         tokens = analizador_lexico(texto)
         
-        salida = "=== TOKENS ===\n"
-        salida_errores = "=== ERRORES ===\n"
+        salida = ""
+        salida_errores = ""
         
         for token in tokens:
             if token.tipo == 'ERROR':
