@@ -26,12 +26,13 @@ class LineNumberArea(QWidget):
 
 
 class CodeEditor(QPlainTextEdit):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
         self.line_number_area = LineNumberArea(self)
-
+        
         self.highlighter = HighlightSyntax(self.document())
-
+        
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
         self.cursorPositionChanged.connect(self.highlight_current_line)
@@ -40,8 +41,11 @@ class CodeEditor(QPlainTextEdit):
         self.update_line_number_area_width(0)
         self.highlight_current_line()
         
-        # Reference to main window for status updates
-        self.main_window = None
+        # Establece la referencia a la ventana principal (solo una vez)
+        self.main_window = parent
+        
+        # Conecta la señal textChanged directamente a este editor
+        self.textChanged.connect(self.texto_cambiado)
         
         # Crear barras de desplazamiento literales
         self.horizontal_scrollbar = QScrollBar(Qt.Orientation.Horizontal)
@@ -57,6 +61,15 @@ class CodeEditor(QPlainTextEdit):
         
         # Para asegurar que los saltos de línea se contabilicen correctamente
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+    
+    def texto_cambiado(self):
+        # Solo llamar a ejecutar_analisis_lexico si main_window está definido
+        if self.main_window is not None:
+            try:
+                # Usar try/except para manejar cualquier error
+                self.main_window.ejecutar_analisis_lexico(cambiar_pestaña=False)
+            except Exception as e:
+                print(f"Error durante el análisis léxico: {e}")
 
     def set_main_window(self, main_window):
         self.main_window = main_window
@@ -171,15 +184,13 @@ class CodeEditor(QPlainTextEdit):
         super().setPlainText(text)
         # Actualizar los rangos de las barras de desplazamiento después de establecer el texto
         self.update_scrollbar_ranges()
-        
-    # Sobreescribir el método keyPressEvent para asegurar que se actualizan las líneas correctamente
+ 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         # Actualizar explícitamente la posición del cursor después de cada pulsación de tecla
         self.update_cursor_position()
         # Actualizar los rangos de las barras de desplazamiento
         self.update_scrollbar_ranges()
-
 
 class CompilerIDE(QMainWindow):
     def __init__(self):
@@ -190,31 +201,42 @@ class CompilerIDE(QMainWindow):
         
         self.initUI()
 
-    def ejecutar_analisis_lexico(self):
+    def ejecutar_analisis_lexico(self, cambiar_pestaña=False):
         if not hasattr(self, 'text_edit') or self.text_edit is None:
             return
-
+            
         texto = self.text_edit.toPlainText()
         tokens = analizador_lexico(texto)
-
+        
         salida = "=== TOKENS ===\n"
         salida_errores = "=== ERRORES ===\n"
-
+        
         for token in tokens:
-            if token.tipo== 'ERROR': 
+            if token.tipo == 'ERROR':
                 salida_errores += f"{token}\n"
             else:
                 salida += f"{token}\n"
-
+        
         self.lexico_output.setPlainText(salida)
-        self.tabs.setCurrentWidget(self.lexico_output)
-
         self.error_lexico.setPlainText(salida_errores)
-        self.errors_tabs.setCurrentWidget(self.lexico_output)
 
-
+        # Guardar en archivos de texto
+        try:
+            with open("tokens.txt", "w", encoding="utf-8") as f_tokens:
+                f_tokens.write(salida)
+            
+            with open("errores.txt", "w", encoding="utf-8") as f_errores:
+                f_errores.write(salida_errores)
+        except Exception as e:
+            print(f"Error al guardar los archivos: {e}")
+        
+        # Solo cambia a la pestaña si se solicita explícitamente
+        if cambiar_pestaña:
+            self.tabs.setCurrentWidget(self.lexico_output)
+            self.errors_tabs.setCurrentWidget(self.error_lexico)
 
     def initUI(self):
+        
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
         self.status_label = QLabel("Listo")
@@ -272,8 +294,12 @@ class CompilerIDE(QMainWindow):
         sintactico_menu = menu_bar.addMenu("Sintáctico")
         semantico_menu = menu_bar.addMenu("Semántico")
 
+        # analizar_lexico_action = QAction("Analizar", self)
+        # analizar_lexico_action.triggered.connect(self.ejecutar_analisis_lexico)
+
+
         analizar_lexico_action = QAction("Analizar", self)
-        analizar_lexico_action.triggered.connect(self.ejecutar_analisis_lexico)
+        analizar_lexico_action.triggered.connect(lambda: self.ejecutar_analisis_lexico(cambiar_pestaña=True))
 
         #analizar_lexico_action = QAction("Analizar", self)
         ver_tokens_action = QAction("Ver Tokens", self)
@@ -344,7 +370,9 @@ class CompilerIDE(QMainWindow):
         self.cursor_position_label.setText(f"Línea: {line}   Columna: {column}")
     
     def load_editor(self):
+        
         self.text_edit = CodeEditor()
+        #self.setCentralWidget(self.text_edit)
         self.text_edit.set_main_window(self)  # Set reference to main window
         
         # Crear un contenedor para el editor y las barras de desplazamiento
