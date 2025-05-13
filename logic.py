@@ -1,6 +1,7 @@
 from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
-from PyQt6.QtCore import QRegularExpression
-import re
+from PyQt6.QtCore import QRegularExpression 
+from PyQt6.QtCore import QRegularExpression as QtRegex
+
 
 class HighlightSyntax(QSyntaxHighlighter):
     def __init__(self, document):
@@ -30,13 +31,6 @@ class HighlightSyntax(QSyntaxHighlighter):
             pattern = QRegularExpression(r"\b" + word + r"\b")
             self.highlightingRules.append((pattern, keywordFormat))
 
-        # Formato para comentarios de una línea (// ...)
-        singleLineCommentFormat = QTextCharFormat()
-        singleLineCommentFormat.setForeground(QColor("#a2a9a5"))
-        self.highlightingRules.append((QRegularExpression(r'//[^\n]*'), singleLineCommentFormat))
-
-        
-
         #Operadores aritméticos
         arithmeticFormat= QTextCharFormat()
         arithmeticFormat.setForeground(QColor("#70a483"))
@@ -55,13 +49,54 @@ class HighlightSyntax(QSyntaxHighlighter):
         #Simbolos
         self.highlightingRules.append((QRegularExpression(r"[\(\)\{\},;.]"), QColor("#0d6b4a")))
 
-            
+         # Formato para comentarios de una línea (// ...)
+        singleLineCommentFormat = QTextCharFormat()
+        singleLineCommentFormat.setForeground(QColor("#a2a9a5"))
+        self.highlightingRules.append((QRegularExpression(r'//[^\n]*'), singleLineCommentFormat))
+        
+        # Define format for multiline comments
+        self.multiLineCommentFormat = QTextCharFormat()
+        self.multiLineCommentFormat.setForeground(QColor("#a2a9a5"))
+        
+        # Compile regular expressions
+        self.multiLineCommentStartExpression = QtRegex(r'/\*')
+        self.multiLineCommentEndExpression = QtRegex(r'\*/')
+        
+    # highlightBlock override
     def highlightBlock(self, text):
-        for pattern, fmt in self.highlightingRules:
-            it = pattern.globalMatch(text)
-            while it.hasNext():
-                match = it.next()
-                self.setFormat(match.capturedStart(), match.capturedLength(), fmt)
+        # Apply single-line highlighting rules
+        for pattern, format in self.highlightingRules:
+            expression = QtRegex(pattern)
+            iterator = expression.globalMatch(text)
+            while iterator.hasNext():
+                match = iterator.next()
+                self.setFormat(match.capturedStart(), match.capturedLength(), format)
+        
+        # Handle multiline comments
+        self.setCurrentBlockState(0)
+        
+        startIndex = 0
+        if self.previousBlockState() != 1:
+            startMatch = self.multiLineCommentStartExpression.match(text)
+            if startMatch.hasMatch():
+                startIndex = startMatch.capturedStart()
+            else:
+                startIndex = -1
+        
+        while startIndex >= 0:
+            endMatch = self.multiLineCommentEndExpression.match(text, startIndex)
+            if endMatch.hasMatch():
+                endIndex = endMatch.capturedEnd()
+                commentLength = endIndex - startIndex
+                self.setFormat(startIndex, commentLength, self.multiLineCommentFormat)
+                
+                # Busca el siguiente comentario multilinea
+                nextStartMatch = self.multiLineCommentStartExpression.match(text, endIndex)
+                startIndex = nextStartMatch.capturedStart() if nextStartMatch.hasMatch() else -1
+            else:
+                self.setFormat(startIndex, len(text) - startIndex, self.multiLineCommentFormat)
+                self.setCurrentBlockState(1)
+                startIndex = -1
 
 class Token:
     def __init__(self, tipo, valor, linea, columna):
@@ -133,7 +168,8 @@ def analizador_lexico(texto):
                 else:
                     i += 1
                     columna += 1
-            
+            # if not cerrado:
+            #     tokens.append(Token('ERROR', 'Comentario no cerrado', linea, columna))
             continue
 
         # Identificadores

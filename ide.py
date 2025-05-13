@@ -10,7 +10,7 @@ import os
 
 from PyQt6.QtGui import QFont
 from logic import HighlightSyntax
-from logic import analizador_lexico, Token
+from logic import analizador_lexico
 
 
 class LineNumberArea(QWidget):
@@ -32,6 +32,7 @@ class CodeEditor(QPlainTextEdit):
         self.line_number_area = LineNumberArea(self)
         
         self.highlighter = HighlightSyntax(self.document())
+        
         
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
