@@ -2,14 +2,144 @@ programa
   lista_declaracion
     declaracion_variable
       tipo: int
-      identificador: i
+      identificador
+        id: x
+        id: y
+        id: z
     declaracion_variable
       tipo: float
-      identificador: x
-    asignacion
-      identificador: i
-      expresion_simple
-        componente: i (L15:C1)
-        operador_suma: +
-        componente: 4 (L17:C1)
-    sent_out
+      identificador
+        id: a
+        id: b
+        id: c
+    lista_sentencias
+      asignacion
+        id: suma
+        componente: 45 (L19:C1)
+      asignacion
+        id: x
+        componente: 32.32 (L23:C1)
+      asignacion
+        id: x
+        componente: 23 (L27:C1)
+      asignacion
+        id: y
+        expresion_simple
+          componente: 2 (L31:C1)
+          suma_op: +
+          componente: 3 (L33:C1)
+          suma_op: -
+          componente: 1 (L35:C1)
+      asignacion
+        id: z
+        expresion_simple
+          componente: y (L39:C1)
+          suma_op: +
+          componente: 7 (L41:C1)
+      asignacion
+        id: y
+        expresion_simple
+          componente: y (L45:C1)
+          suma_op: +
+          componente: 1 (L47:C1)
+      asignacion
+        id: a
+        expresion_simple
+          componente: 24.0 (L51:C1)
+          suma_op: +
+          componente: 4 (L53:C1)
+          suma_op: -
+          termino
+            componente: 1 (L55:C1)
+            mult_op: /
+            componente: 3 (L57:C1)
+            mult_op: *
+            componente: 2 (L59:C1)
+          suma_op: +
+          componente: 34 (L61:C1)
+          suma_op: -
+          componente: 1 (L63:C1)
+      asignacion
+        id: x
+        termino
+          expresion_simple
+            componente: 5 (L68:C1)
+            suma_op: -
+            componente: 3 (L70:C1)
+          mult_op: *
+          termino
+            componente: 8 (L74:C1)
+            mult_op: /
+            componente: 2 (L76:C1)
+      asignacion
+        id: y
+        expresion_simple
+          componente: 5 (L81:C1)
+          suma_op: +
+          componente: 3 (L83:C1)
+          suma_op: -
+          termino
+            componente: 2 (L85:C1)
+            mult_op: *
+            componente: 4 (L87:C1)
+            mult_op: /
+            componente: 7 (L89:C1)
+          suma_op: -
+          componente: 9 (L91:C1)
+      asignacion
+        id: z
+        expresion_simple
+          termino
+            componente: 8 (L95:C1)
+            mult_op: /
+            componente: 2 (L97:C1)
+          suma_op: +
+          termino
+            componente: 15 (L99:C1)
+            mult_op: *
+            componente: 4 (L101:C1)
+      asignacion
+        id: y
+        componente: 14.54 (L105:C1)
+      seleccion
+        expresion_relacional
+          componente: 2 (L108:C1)
+          rel_op: >
+          componente: 3 (L110:C1)
+        lista_sentencias
+          asignacion
+            id: y
+            expresion_simple
+              componente: a (L114:C1)
+              suma_op: +
+              componente: 3 (L116:C1)
+        else
+          lista_sentencias
+            seleccion
+              expresion_relacional
+                componente: 4 (L120:C1)
+                rel_op: >
+                componente: 2 (L122:C1)
+              else
+                lista_sentencias
+                  asignacion
+                    id: b
+                    componente: 5.0 (L133:C1)
+            asignacion
+              id: y
+              expresion_simple
+                componente: y (L138:C1)
+                suma_op: +
+                componente: 1 (L140:C1)
+      incremento_decremento
+        identificador: a
+        operador: ++
+      incremento_decremento
+        identificador: c
+        operador: --
+      asignacion
+        id: x
+        expresion_simple
+          componente: 3 (L151:C1)
+          suma_op: +
+          componente: 4 (L153:C1)
