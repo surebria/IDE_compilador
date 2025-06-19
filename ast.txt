@@ -1,0 +1,4 @@
+programa
+  lista_declaracion
+    asignacion
+      identificador: x

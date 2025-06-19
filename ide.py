@@ -1,3 +1,4 @@
+
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
     QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar
@@ -8,6 +9,7 @@ import sys
 import os
 
 
+from logic import analizador_sintactico, mostrar_ast_texto
 from PyQt6.QtGui import QFont
 from logic import HighlightSyntax
 from logic import analizador_lexico
@@ -309,12 +311,21 @@ class CompilerIDE(QMainWindow):
         lexico_menu.addSeparator()
         lexico_menu.addAction(ver_tokens_action)
         
+        #analizar_sintactico_action = QAction("Analizar", self)
+        #ver_ast_action = QAction("Ver Árbol Sintáctico", self)
+        #sintactico_menu.addAction(analizar_sintactico_action)
+        #sintactico_menu.addSeparator()
+        #sintactico_menu.addAction(ver_ast_action)
         analizar_sintactico_action = QAction("Analizar", self)
+        analizar_sintactico_action.triggered.connect(lambda: self.ejecutar_analisis_sintactico(cambiar_pestaña=True))
+        
         ver_ast_action = QAction("Ver Árbol Sintáctico", self)
+        ver_ast_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.sintactico_output))
+        
         sintactico_menu.addAction(analizar_sintactico_action)
         sintactico_menu.addSeparator()
         sintactico_menu.addAction(ver_ast_action)
-        
+        ###
         analizar_semantico_action = QAction("Analizar", self)
         ver_tabla_simbolos_action = QAction("Ver Tabla de Símbolos", self)
         semantico_menu.addAction(analizar_semantico_action)
@@ -410,7 +421,14 @@ class CompilerIDE(QMainWindow):
         self.lexico_output.setReadOnly(True)
         self.tabs.addTab(self.lexico_output, "Léxico")
 
-        self.tabs.addTab(QLabel("Salida Sintáctica"), "Sintáctico")
+        #self.tabs.addTab(QLabel("Salida Sintáctica"), "Sintáctico")
+
+        ##esto es el reemplazo 
+        self.sintactico_output = QTextEdit()
+        self.sintactico_output.setReadOnly(True)
+        self.tabs.addTab(self.sintactico_output, "Sintáctico")
+
+
         self.tabs.addTab(QLabel("Salida Semántica"), "Semántico")
         self.tabs.addTab(QLabel("Hash Table Resultados"), "Hash Table")
         self.tabs.addTab(QLabel("Código Intermedio Resultados"), "Código Intermedio")
@@ -426,7 +444,13 @@ class CompilerIDE(QMainWindow):
         self.errors_tabs.addTab(self.error_lexico, "Errores Léxicos")
 
         #self.errors_tabs.addTab(QLabel("Errores Léxicos"), "Errores Léxicos")
-        self.errors_tabs.addTab(QLabel("Errores Sintácticos"), "Errores Sintácticos")
+        #self.errors_tabs.addTab(QLabel("Errores Sintácticos"), "Errores Sintácticos")
+        ##lo de abajo es el reemplazo
+        self.error_sintactico = QTextEdit()
+        self.error_sintactico.setReadOnly(True)
+        self.errors_tabs.addTab(self.error_sintactico, "Errores Sintácticos")
+
+
         self.errors_tabs.addTab(QLabel("Errores Semánticos"), "Errores Semánticos")
         self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
         
@@ -485,11 +509,81 @@ class CompilerIDE(QMainWindow):
             self.current_file = file_name
             self.status_label.setText(f"Guardado como: {os.path.basename(file_name)}")
     
+    #########################NUEVO ANALISIS SINTACTICO###########################3
+    def ejecutar_analisis_sintactico(self, cambiar_pestaña=False):
+        try:
+            # Ejecutar análisis sintáctico
+            ast, errores = analizador_sintactico("tokens.txt")
+            
+            # Mostrar resultados del AST
+            if ast:
+                ast_texto = mostrar_ast_texto(ast)
+                self.sintactico_output.setPlainText(ast_texto)
+            else:
+                self.sintactico_output.setPlainText("No se pudo generar el AST debido a errores sintácticos")
+            
+            # Mostrar errores sintácticos
+            if errores:
+                errores_texto = "ERRORES SINTÁCTICOS ENCONTRADOS:\n\n"
+                for i, error in enumerate(errores, 1):
+                    errores_texto += f"Error {i}: {error}\n"
+                self.error_sintactico.setPlainText(errores_texto)
+            else:
+                self.error_sintactico.setPlainText("✓ No se encontraron errores sintácticos")
+            
+            # Guardar resultados en archivos
+            try:
+                with open("ast.txt", "w", encoding="utf-8") as f_ast:
+                    if ast:
+                        f_ast.write(ast_texto)
+                    else:
+                        f_ast.write("No se pudo generar el AST debido a errores sintácticos")
+                
+                with open("errores_sintacticos.txt", "w", encoding="utf-8") as f_errores:
+                    if errores:
+                        for error in errores:
+                            f_errores.write(f"{error}\n")
+                    else:
+                        f_errores.write("No se encontraron errores sintácticos")
+                        
+                print("Archivos del análisis sintáctico guardados: ast.txt y errores_sintacticos.txt")
+                
+            except Exception as e:
+                print(f"Error al guardar archivos del análisis sintáctico: {e}")
+            
+            # Cambiar a la pestaña si se solicita
+            if cambiar_pestaña:
+                self.tabs.setCurrentWidget(self.sintactico_output)
+                self.errors_tabs.setCurrentWidget(self.error_sintactico)
+            
+            # Actualizar status
+            if errores:
+                self.status_label.setText(f"Análisis sintáctico completado con {len(errores)} errores")
+            else:
+                self.status_label.setText("Análisis sintáctico completado exitosamente")
+            
+            # Mostrar resumen en consola
+            print(f"Análisis sintáctico completado:")
+            print(f"- AST generado: {'Sí' if ast else 'No'}")
+            print(f"- Errores encontrados: {len(errores)}")
+            
+        except Exception as e:
+            error_msg = f"Error durante el análisis sintáctico: {str(e)}"
+            self.sintactico_output.setPlainText(error_msg)
+            self.error_sintactico.setPlainText(error_msg)
+            self.status_label.setText("Error en análisis sintáctico")
+            print(error_msg)
+            import traceback
+            traceback.print_exc()
+
+#################################TERMINA############################
     def close_file(self):
         self.setCentralWidget(QWidget())
         self.current_file = None
         self.status_label.setText("Archivo cerrado")
         self.cursor_position_label.setText("Línea: 1     Columna: 1")
+
+    
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -536,9 +630,10 @@ if __name__ == "__main__":
             background: none;
         }
     """)
-    
+
     app.setFont(font)
 
     window = CompilerIDE()
     window.show()
     sys.exit(app.exec())
+    
