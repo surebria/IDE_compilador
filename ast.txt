@@ -1,4 +1,15 @@
 programa
   lista_declaracion
-    asignacion
+    declaracion_variable
+      tipo: int
+      identificador: i
+    declaracion_variable
+      tipo: float
       identificador: x
+    asignacion
+      identificador: i
+      expresion_simple
+        componente: i (L15:C1)
+        operador_suma: +
+        componente: 4 (L17:C1)
+    sent_out

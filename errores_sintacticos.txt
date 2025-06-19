@@ -1,3 +1,3 @@
-Error Sintáctico: Declaración o sentencia inválida. Token inesperado '=' (OPERADOR_ASIGNACION) en línea 3, columna 1
-Error Sintáctico: Se esperaba '=' después del identificador en línea 5, columna 1
-Error Sintáctico: Declaración o sentencia inválida. Token inesperado '-' (OPERADOR_ARITMETICO) en línea 6, columna 1
+Error Sintáctico: Se esperaba ';' después de la declaración en línea 5, columna 1
+Error Sintáctico: Se esperaba ';' después de la declaración en línea 10, columna 1
+Error Sintáctico: Se esperaba '<<' después de cout en línea 20, columna 1

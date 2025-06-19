@@ -294,7 +294,7 @@ def analizador_lexico(texto):
 
     return tokens
 
-    ########################################A PARTIR DE ESTO ES LO NUEVO QUE SE AGREGO#######################
+########################################A PARTIR DE ESTO ES LO NUEVO QUE SE AGREGO#######################
 
 class NodoAST:
     """Clase base para todos los nodos del AST"""

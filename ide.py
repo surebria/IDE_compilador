@@ -1,7 +1,8 @@
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
-    QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar
+    QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar, QTreeWidget,
+    QTreeWidgetItem
 )
 from PyQt6.QtGui import QAction, QColor, QPainter, QTextFormat, QFontMetrics, QIcon
 from PyQt6.QtCore import QRect, Qt, QSize, pyqtSlot
@@ -204,6 +205,7 @@ class CompilerIDE(QMainWindow):
         
         self.initUI()
 
+
     def ejecutar_analisis_lexico(self, cambiar_pestaña=False):
         if not hasattr(self, 'text_edit') or self.text_edit is None:
             return
@@ -239,7 +241,6 @@ class CompilerIDE(QMainWindow):
             self.errors_tabs.setCurrentWidget(self.error_lexico)
 
     def initUI(self):
-        
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
         self.status_label = QLabel("Listo")
@@ -250,10 +251,10 @@ class CompilerIDE(QMainWindow):
         
         menu_bar = self.menuBar()
         menu_bar.setStyleSheet("QMenuBar { background-color: #f0f0f0; }")
-        
+
         file_menu = menu_bar.addMenu("Archivo")
         #file_menu.setStyleSheet("QMenu { background-color: #ffffff; border: 1px solid #cccccc; }")
-        
+
         self.new_action = QAction("Nuevo", self)
         self.open_action = QAction("Abrir", self)
         self.save_action = QAction("Guardar", self)
@@ -316,11 +317,12 @@ class CompilerIDE(QMainWindow):
         #sintactico_menu.addAction(analizar_sintactico_action)
         #sintactico_menu.addSeparator()
         #sintactico_menu.addAction(ver_ast_action)
+
         analizar_sintactico_action = QAction("Analizar", self)
         analizar_sintactico_action.triggered.connect(lambda: self.ejecutar_analisis_sintactico(cambiar_pestaña=True))
         
         ver_ast_action = QAction("Ver Árbol Sintáctico", self)
-        ver_ast_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.sintactico_output))
+        ver_ast_action.triggered.connect(lambda: self.ejecutar_analisis_sintactico(cambiar_pestaña=True))
         
         sintactico_menu.addAction(analizar_sintactico_action)
         sintactico_menu.addSeparator()
@@ -382,9 +384,7 @@ class CompilerIDE(QMainWindow):
         self.cursor_position_label.setText(f"Línea: {line}   Columna: {column}")
     
     def load_editor(self):
-        
         self.text_edit = CodeEditor()
-        #self.setCentralWidget(self.text_edit)
         self.text_edit.set_main_window(self)  # Set reference to main window
         
         # Crear un contenedor para el editor y las barras de desplazamiento
@@ -392,7 +392,7 @@ class CompilerIDE(QMainWindow):
         editor_layout = QVBoxLayout(editor_container)
         editor_layout.setContentsMargins(0, 0, 0, 0)
         editor_layout.setSpacing(0)
-        
+
         # Añadir el layout horizontal para el editor y la barra vertical
         h_layout = QHBoxLayout()
         h_layout.setContentsMargins(0, 0, 0, 0)
@@ -415,51 +415,63 @@ class CompilerIDE(QMainWindow):
         # Inicializar los rangos de las barras de desplazamiento
         self.text_edit.update_scrollbar_ranges()
         
+        # Crear las pestañas principales
         self.tabs = QTabWidget()
-        #self.tabs.addTab(QLabel("Salida Léxica"), "Léxico")
+        
+        # Pestaña Léxico
         self.lexico_output = QTextEdit()
         self.lexico_output.setReadOnly(True)
         self.tabs.addTab(self.lexico_output, "Léxico")
 
-        #self.tabs.addTab(QLabel("Salida Sintáctica"), "Sintáctico")
+        # Pestaña Sintáctico - CREAR SOLO UNA VEZ con el TreeWidget
+        self.sintactico_widget = QWidget()
+        sintactico_layout = QVBoxLayout(self.sintactico_widget)
+        
+        # Crear el TreeWidget para el AST
+        self.tree_ast = QTreeWidget()
+        self.tree_ast.setHeaderLabels(["Árbol de Sintaxis Abstracta (AST)"])
+        sintactico_layout.addWidget(self.tree_ast)
+        
+        # Agregar la pestaña sintáctico con el widget que contiene el TreeWidget
+        self.tabs.addTab(self.sintactico_widget, "Sintáctico")
 
-        ##esto es el reemplazo 
-        self.sintactico_output = QTextEdit()
-        self.sintactico_output.setReadOnly(True)
-        self.tabs.addTab(self.sintactico_output, "Sintáctico")
-
-
+        # Otras pestañas
         self.tabs.addTab(QLabel("Salida Semántica"), "Semántico")
         self.tabs.addTab(QLabel("Hash Table Resultados"), "Hash Table")
         self.tabs.addTab(QLabel("Código Intermedio Resultados"), "Código Intermedio")
 
+        # Alinear labels de pestañas vacías
         for i in range(self.tabs.count()):
-            label = self.tabs.widget(i)
-            label.setAlignment(Qt.AlignmentFlag.AlignTop)
+            widget = self.tabs.widget(i)
+            if isinstance(widget, QLabel):
+                widget.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+        # Crear las pestañas de errores
         self.errors_tabs = QTabWidget()
 
+        # Errores Léxicos
         self.error_lexico = QTextEdit()
         self.error_lexico.setReadOnly(True)
         self.errors_tabs.addTab(self.error_lexico, "Errores Léxicos")
 
-        #self.errors_tabs.addTab(QLabel("Errores Léxicos"), "Errores Léxicos")
-        #self.errors_tabs.addTab(QLabel("Errores Sintácticos"), "Errores Sintácticos")
-        ##lo de abajo es el reemplazo
+        # Errores Sintácticos
         self.error_sintactico = QTextEdit()
         self.error_sintactico.setReadOnly(True)
         self.errors_tabs.addTab(self.error_sintactico, "Errores Sintácticos")
 
-
+        # Otras pestañas de errores
         self.errors_tabs.addTab(QLabel("Errores Semánticos"), "Errores Semánticos")
         self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
         
+        # Alinear labels de pestañas vacías
         for i in range(self.errors_tabs.count()):
-            label = self.errors_tabs.widget(i)
-            label.setAlignment(Qt.AlignmentFlag.AlignTop)
+            widget = self.errors_tabs.widget(i)
+            if isinstance(widget, QLabel):
+                widget.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+        # Crear los splitters
         top_splitter = QSplitter(Qt.Orientation.Horizontal)
-        top_splitter.addWidget(editor_container)  # Usar el contenedor del editor en lugar de text_edit directamente
+        top_splitter.addWidget(editor_container)
         top_splitter.addWidget(self.tabs)
         top_splitter.setSizes([600, 600])
 
@@ -468,11 +480,15 @@ class CompilerIDE(QMainWindow):
         main_splitter.addWidget(self.errors_tabs)
         main_splitter.setSizes([400, 250]) 
 
+        # Crear el layout principal
         main_layout = QVBoxLayout()
         main_layout.addWidget(main_splitter)
 
+        # Crear el contenedor principal SOLO UNA VEZ
         self.container = QWidget()
         self.container.setLayout(main_layout)
+        
+        # Establecer como central widget SOLO UNA VEZ
         self.setCentralWidget(self.container)
         
         # Initialize cursor position
@@ -512,16 +528,46 @@ class CompilerIDE(QMainWindow):
     #########################NUEVO ANALISIS SINTACTICO###########################3
     def ejecutar_analisis_sintactico(self, cambiar_pestaña=False):
         try:
+            # Verificar que el TreeWidget existe
+            if not hasattr(self, 'tree_ast') or self.tree_ast is None:
+                self.status_label.setText("Error: TreeWidget no disponible")
+                return
+                
             # Ejecutar análisis sintáctico
             ast, errores = analizador_sintactico("tokens.txt")
             
+            # Limpiar el árbol antes de agregar nuevos elementos
+            self.tree_ast.clear()
+            
             # Mostrar resultados del AST
             if ast:
-                ast_texto = mostrar_ast_texto(ast)
-                self.sintactico_output.setPlainText(ast_texto)
+                def agregar_nodo(nodo_ast, padre_item):
+                    try:
+                        if nodo_ast.valor:
+                            texto = f"{nodo_ast.tipo}: {nodo_ast.valor}"
+                        else:
+                            texto = f"{nodo_ast.tipo}"
+
+                        if nodo_ast.linea and nodo_ast.columna:
+                            texto += f" (L{nodo_ast.linea}:C{nodo_ast.columna})"
+
+                        item = QTreeWidgetItem([texto])
+                        if padre_item:
+                            padre_item.addChild(item)
+                        else:
+                            self.tree_ast.addTopLevelItem(item)
+
+                        for hijo in nodo_ast.hijos:
+                            agregar_nodo(hijo, item)
+                            
+                    except Exception as e:
+                        print(f"Error al agregar nodo al árbol: {e}")
+
+                agregar_nodo(ast, None)
+                self.tree_ast.expandAll()
             else:
-                self.sintactico_output.setPlainText("No se pudo generar el AST debido a errores sintácticos")
-            
+                self.tree_ast.addTopLevelItem(QTreeWidgetItem(["No se pudo generar el AST"]))
+
             # Mostrar errores sintácticos
             if errores:
                 errores_texto = "ERRORES SINTÁCTICOS ENCONTRADOS:\n\n"
@@ -531,13 +577,12 @@ class CompilerIDE(QMainWindow):
             else:
                 self.error_sintactico.setPlainText("✓ No se encontraron errores sintácticos")
             
-            # Guardar resultados en archivos
+
+            ast_texto = mostrar_ast_texto(ast) if ast else "No se pudo generar el AST debido a errores sintácticos"
+
             try:
                 with open("ast.txt", "w", encoding="utf-8") as f_ast:
-                    if ast:
-                        f_ast.write(ast_texto)
-                    else:
-                        f_ast.write("No se pudo generar el AST debido a errores sintácticos")
+                    f_ast.write(ast_texto)
                 
                 with open("errores_sintacticos.txt", "w", encoding="utf-8") as f_errores:
                     if errores:
@@ -547,13 +592,14 @@ class CompilerIDE(QMainWindow):
                         f_errores.write("No se encontraron errores sintácticos")
                         
                 print("Archivos del análisis sintáctico guardados: ast.txt y errores_sintacticos.txt")
-                
+
             except Exception as e:
                 print(f"Error al guardar archivos del análisis sintáctico: {e}")
-            
+
+                        
             # Cambiar a la pestaña si se solicita
             if cambiar_pestaña:
-                self.tabs.setCurrentWidget(self.sintactico_output)
+                self.tabs.setCurrentWidget(self.sintactico_widget)  # Cambiar a sintactico_widget
                 self.errors_tabs.setCurrentWidget(self.error_sintactico)
             
             # Actualizar status
@@ -569,8 +615,12 @@ class CompilerIDE(QMainWindow):
             
         except Exception as e:
             error_msg = f"Error durante el análisis sintáctico: {str(e)}"
-            self.sintactico_output.setPlainText(error_msg)
-            self.error_sintactico.setPlainText(error_msg)
+            # Verificar que los widgets existen antes de usarlos
+            if hasattr(self, 'error_sintactico') and self.error_sintactico is not None:
+                self.error_sintactico.setPlainText(error_msg)
+            if hasattr(self, 'tree_ast') and self.tree_ast is not None:
+                self.tree_ast.clear()
+                self.tree_ast.addTopLevelItem(QTreeWidgetItem([error_msg]))
             self.status_label.setText("Error en análisis sintáctico")
             print(error_msg)
             import traceback
