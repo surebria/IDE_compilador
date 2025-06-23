@@ -12,50 +12,28 @@ programa
         id
         id
         id
-    lista_sentencias
-      asignacion
+    asignacion
+      numero
+    asignacion
+      numero
+    asignacion
+      numero
+    asignacion
+      suma_op
+        suma_op
+          numero
+          numero
         numero
-      asignacion
+    asignacion
+      suma_op
+        id
         numero
-      asignacion
+    asignacion
+      suma_op
+        id
         numero
-      asignacion
-        suma_op
-          suma_op
-            numero
-            numero
-          numero
-      asignacion
-        suma_op
-          id
-          numero
-      asignacion
-        suma_op
-          id
-          numero
-      asignacion
-        suma_op
-          suma_op
-            suma_op
-              suma_op
-                numero
-                numero
-              mult_op
-                mult_op
-                  numero
-                  numero
-                numero
-            numero
-          numero
-      asignacion
-        mult_op
-          suma_op
-            numero
-            numero
-          mult_op
-            numero
-            numero
-      asignacion
+    asignacion
+      suma_op
         suma_op
           suma_op
             suma_op
@@ -67,100 +45,121 @@ programa
                 numero
               numero
           numero
-      asignacion
-        suma_op
-          mult_op
-            numero
-            numero
-          mult_op
-            numero
-            numero
-      asignacion
         numero
-      seleccion
-        rel_op
+    asignacion
+      mult_op
+        suma_op
           numero
           numero
-        lista_sentencias
-          asignacion
-            suma_op
-              id
+        mult_op
+          numero
+          numero
+    asignacion
+      suma_op
+        suma_op
+          suma_op
+            numero
+            numero
+          mult_op
+            mult_op
               numero
-        else
-          lista_sentencias
-            seleccion
-              log_op
-                rel_op
-                  numero
-                  numero
-                bool
+              numero
+            numero
+        numero
+    asignacion
+      suma_op
+        mult_op
+          numero
+          numero
+        mult_op
+          numero
+          numero
+    asignacion
+      numero
+    seleccion
+      rel_op
+        numero
+        numero
+      lista_sentencias
+        asignacion
+          suma_op
+            id
+            numero
+      else
+        lista_sentencias
+          seleccion
+            log_op
+              rel_op
+                numero
+                numero
+              bool
+            lista_sentencias
+              asignacion
+                numero
+            else
               lista_sentencias
                 asignacion
                   numero
-              else
-                lista_sentencias
-                  asignacion
-                    numero
-            asignacion
+          asignacion
+            suma_op
+              id
+              numero
+    asignacion
+      expresion_simple
+        id
+        numero
+    asignacion
+      expresion_simple
+        id
+        numero
+    asignacion
+      suma_op
+        numero
+        numero
+    repeticion
+      lista_sentencias
+        asignacion
+          suma_op
+            mult_op
               suma_op
                 id
                 numero
-      asignacion
-        expresion_simple
-          id
-          numero
-      asignacion
-        expresion_simple
-          id
-          numero
-      asignacion
-        suma_op
-          numero
-          numero
-      iteracion
-        condicion
-          rel_op
-            id
-            numero
-        lista_sentencias
-          asignacion
-            suma_op
-              mult_op
-                suma_op
-                  id
-                  numero
-                numero
               numero
-          iteracion
-            condicion
-              rel_op
-                id
+            numero
+        iteracion
+          condicion
+            rel_op
+              id
+              numero
+          lista_sentencias
+            asignacion
+              suma_op
                 numero
-            lista_sentencias
-              asignacion
-                suma_op
-                  numero
+                mult_op
                   mult_op
                     mult_op
-                      mult_op
-                        numero
-                        numero
+                      numero
                       numero
                     numero
-              sent_in
-                id
-              asignacion
-                mult_op
                   numero
-                  numero
-      iteracion
-        condicion
-          rel_op
-            id
-            numero
-        lista_sentencias
-          sent_in
-            id
-          sent_out
-            salida
+            sent_in
               id
+            asignacion
+              mult_op
+                numero
+                numero
+      condicion
+        rel_op
+          id
+          numero
+    iteracion
+      condicion
+        rel_op
+          id
+          numero
+      lista_sentencias
+        sent_in
+          id
+        sent_out
+          salida
+            id

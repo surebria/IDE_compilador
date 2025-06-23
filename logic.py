@@ -533,27 +533,38 @@ class AnalizadorSintactico:
 
         return nodo_programa
 
-
     def lista_declaracion(self):
         """lista_declaracion → { declaracion_variable } lista_sentencias"""
         print("Analizando lista de declaraciones...")
-        nodo = NodoAST("lista_declaracion")
+        
+        # Si solo hay declaraciones y sentencias, no debe encapsularse todo en un nodo contenedor.
+        nodos = []
 
-        # Declaraciones variables cero o más
+        # Declaraciones de variables (cero o más)
         while self.token_actual() and (self.coincidir('int') or self.coincidir('float') or self.coincidir('bool')):
             decl = self.declaracion_variable()
             if decl:
-                nodo.agregar_hijo(decl)
+                nodos.append(decl)
             else:
                 self.sincronizar_hasta(self.tokens_sync_declaracion)
         
-        # Lista de sentencias
+        # Sentencias (también pueden ser cero o más)
         lista_sent = self.lista_sentencias()
         if lista_sent:
-            nodo.agregar_hijo(lista_sent)
+            for hijo in lista_sent.hijos:
+                nodos.append(hijo)
 
-        return nodo if nodo.hijos else None
+        # Si hay más de un nodo, empaquetamos en un solo nodo contenedor
+        if len(nodos) == 1:
+            return nodos[0]
+        elif len(nodos) > 1:
+            nodo_lista = NodoAST("bloque")  # Puedes llamarlo "programa" o similar si lo prefieres
+            for n in nodos:
+                nodo_lista.agregar_hijo(n)
+            return nodo_lista
 
+        return None
+    
     def declaracion_variable(self):
         """declaracion_variable → tipo identificador ;"""
         print("Analizando declaración de variable...")
@@ -692,6 +703,7 @@ class AnalizadorSintactico:
             )
             # NO avanzar aquí, dejar que lista_sentencias maneje la sincronización
             return None
+
 
     def asignacion(self):
         """asignacion → id = sent_expresion"""
@@ -1043,7 +1055,7 @@ class AnalizadorSintactico:
             expr = self.expresion()
             if not self.consumir(')', "Se esperaba ')' después de la expresión"):
                 self.sincronizar_hasta([';'])
-            return expr  # 🔥 Importante: retornar directamente la subexpresión
+            return expr  
 
         # Números o identificadores
         if token.tipo in ['NUMERO_ENTERO', 'NUMERO_DECIMAL', 'NUMERO_REAL']:
@@ -1155,92 +1167,41 @@ class AnalizadorSintactico:
         return nodo
 
 
-
-    # def repeticion(self):
-    #     """repeticion → do lista_sentencias while expresion | do lista_sentencias until expresion"""
-    #     print("Analizando repetición (do-while/do-until)...")
-    #     nodo = NodoAST("repeticion")
-
-    #     # Consumir 'do'
-    #     if not self.consumir('do'):
-    #         return None
-
-    #     # Consumir lista de sentencias
-    #     lista = self.lista_sentencias()
-    #     if lista:
-    #         nodo.agregar_hijo(lista)
-
-    #     # Verificar si es while o until
-    #     if self.coincidir('while'):
-    #         self.avanzar()  # Consumir 'while'
-    #         nodo_tipo = NodoAST("tipo_repeticion", "while")
-    #         nodo.agregar_hijo(nodo_tipo)
-        
-    #         # Consumir expresión
-    #         expr = self.expresion()
-    #         if expr:
-    #             nodo.agregar_hijo(expr)
-    #         else:
-    #             self.agregar_error("Se esperaba una expresión después de 'while'",
-    #                             self.obtener_ultima_posicion_valida())
-        
-    #     elif self.coincidir('until'):
-    #         self.avanzar()  # Consumir 'until'
-    #         nodo_tipo = NodoAST("tipo_repeticion", "until")
-    #         nodo.agregar_hijo(nodo_tipo)
-        
-    #         # Consumir expresión
-    #         expr = self.expresion()
-    #         if expr:
-    #             nodo.agregar_hijo(expr)
-    #         else:
-    #             self.agregar_error("Se esperaba una expresión después de 'until'",
-    #                             self.obtener_ultima_posicion_valida())
-                
-    #     else:
-    #         self.agregar_error("Se esperaba 'while' o 'until' después del bloque 'do'",
-    #                         self.obtener_ultima_posicion_valida())
-    #         self.sincronizar_hasta(self.tokens_sync_sentencia)
-    #         return None
-            
-    #     return nodo
-
     def repeticion(self):
-        """repeticion → do lista_sentencias while expresion | do lista_sentencias until expresion"""
-        print("Analizando repetición (do-while/do-until)...")
-        nodo = NodoAST("iteracion")  # Usamos 'iteracion' para ambas variantes
+        """repeticion → do lista_sentencias (while|until) expresion"""
+        print("Analizando repetición (do-while/do-until)…")
+        # Creamos el nodo padre con un valor genérico o guardando el tipo:
+        nodo = NodoAST("repeticion")
 
         # Consumir 'do'
-        if not self.consumir('do'):
+        if not self.consumir('do', "Se esperaba 'do' al inicio de la repetición"):
             return None
 
-        # Procesar lista de sentencias
+        # Primero el cuerpo del bucle
         lista = self.lista_sentencias()
         if lista:
-            nodo_lista = NodoAST("lista_sentencias")
-            for hijo in lista.hijos:
-                nodo_lista.agregar_hijo(hijo)
-            nodo.agregar_hijo(nodo_lista)
+            nodo.agregar_hijo(lista)
 
-        # Consumir 'while' o 'until'
+        # Ahora detectamos si es while o until
         if self.coincidir('while') or self.coincidir('until'):
-            tipo = self.token_actual().valor
-            self.avanzar()
+            tipo = self.token_actual().valor  # "while" o "until"
+            self.avanzar()  # consumimos la palabra clave
 
+            # La expresión de condición
             expr = self.expresion()
-            if expr:
-                nodo_cond = NodoAST("condicion")
-                nodo_cond.agregar_hijo(expr)
-                nodo.hijos.insert(0, nodo_cond)
-            else:
+            if not expr:
                 self.agregar_error(f"Se esperaba una expresión después de '{tipo}'",
                                 self.obtener_ultima_posicion_valida())
+            else:
+                # Creamos el mismo subnodo 'condicion' que en tu iteración normal
+                nodo_cond = NodoAST("condicion", tipo)
+                nodo_cond.agregar_hijo(expr)
+                nodo.agregar_hijo(nodo_cond)
         else:
             self.agregar_error("Se esperaba 'while' o 'until' después del bloque 'do'",
                             self.obtener_ultima_posicion_valida())
 
         return nodo
-
 
     def sent_in(self):
         """sent_in → cin >> id ;"""
