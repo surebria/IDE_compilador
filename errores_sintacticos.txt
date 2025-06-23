@@ -1,2 +1,1 @@
-Error Sintáctico: Se esperaba '}' al final del programa en línea 194, columna 1
-Error Sintáctico: Token inesperado después del final del programa: 'end' (PALABRA_RESERVADA) en línea 194, columna 1
+No se encontraron errores sintácticos

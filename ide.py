@@ -214,22 +214,24 @@ class CompilerIDE(QMainWindow):
         tokens = analizador_lexico(texto)
         
         salida = ""
+        salida_simple = ""
         salida_errores = ""
         
         for token in tokens:
             if token.tipo == 'ERROR':
                 salida_errores += f"{token}\n"
             else:
-                salida += f"{token}\n"
-        
-        self.lexico_output.setPlainText(salida)
+                salida += f"{token}\n"  # para tokens2.txt
+                salida_simple += f"{token.tipo}('{token.valor}')\n"  # para tokens.txt
+
+        self.lexico_output.setPlainText(salida_simple)
         self.error_lexico.setPlainText(salida_errores)
 
         # Guardar en archivos de texto
         try:
             with open("tokens.txt", "w", encoding="utf-8") as f_tokens:
-                f_tokens.write(salida)
-            
+                f_tokens.write(salida)  # Solo tipo y valor
+
             with open("errores.txt", "w", encoding="utf-8") as f_errores:
                 f_errores.write(salida_errores)
         except Exception as e:
@@ -568,9 +570,9 @@ class CompilerIDE(QMainWindow):
 
             # Mostrar errores sintácticos
             if errores:
-                errores_texto = "ERRORES SINTÁCTICOS ENCONTRADOS:\n\n"
+                errores_texto = ""
                 for i, error in enumerate(errores, 1):
-                    errores_texto += f"Error {i}: {error}\n"
+                    errores_texto += f"{error}\n"
                 self.error_sintactico.setPlainText(errores_texto)
             else:
                 self.error_sintactico.setPlainText(" No se encontraron errores sintácticos")

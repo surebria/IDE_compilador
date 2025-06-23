@@ -1,212 +1,212 @@
-PALABRA_RESERVADA('main')
-ESPECIAL('{')
-PALABRA_RESERVADA('int')
-IDENTIFICADOR('x')
-ESPECIAL(',')
-IDENTIFICADOR('y')
-ESPECIAL(',')
-IDENTIFICADOR('z')
-ESPECIAL(';')
-PALABRA_RESERVADA('float')
-IDENTIFICADOR('a')
-ESPECIAL(',')
-IDENTIFICADOR('b')
-ESPECIAL(',')
-IDENTIFICADOR('c')
-ESPECIAL(';')
-IDENTIFICADOR('suma')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('45')
-ESPECIAL(';')
-IDENTIFICADOR('x')
-OPERADOR_ASIGNACION('=')
-NUMERO_REAL('32.32')
-ESPECIAL(';')
-IDENTIFICADOR('x')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('23')
-ESPECIAL(';')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('2')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('3')
-OPERADOR_ARITMETICO('-')
-NUMERO_ENTERO('1')
-ESPECIAL(';')
-IDENTIFICADOR('z')
-OPERADOR_ASIGNACION('=')
-IDENTIFICADOR('y')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('7')
-ESPECIAL(';')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-IDENTIFICADOR('y')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('1')
-ESPECIAL(';')
-IDENTIFICADOR('a')
-OPERADOR_ASIGNACION('=')
-NUMERO_REAL('24.0')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('4')
-OPERADOR_ARITMETICO('-')
-NUMERO_ENTERO('1')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('3')
-OPERADOR_ARITMETICO('*')
-NUMERO_ENTERO('2')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('34')
-OPERADOR_ARITMETICO('-')
-NUMERO_ENTERO('1')
-ESPECIAL(';')
-IDENTIFICADOR('x')
-OPERADOR_ASIGNACION('=')
-ESPECIAL('(')
-NUMERO_ENTERO('5')
-OPERADOR_ARITMETICO('-')
-NUMERO_ENTERO('3')
-ESPECIAL(')')
-OPERADOR_ARITMETICO('*')
-ESPECIAL('(')
-NUMERO_ENTERO('8')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('2')
-ESPECIAL(')')
-ESPECIAL(';')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('5')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('3')
-OPERADOR_ARITMETICO('-')
-NUMERO_ENTERO('2')
-OPERADOR_ARITMETICO('*')
-NUMERO_ENTERO('4')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('7')
-OPERADOR_ARITMETICO('-')
-NUMERO_ENTERO('9')
-ESPECIAL(';')
-IDENTIFICADOR('z')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('8')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('2')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('15')
-OPERADOR_ARITMETICO('*')
-NUMERO_ENTERO('4')
-ESPECIAL(';')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-NUMERO_REAL('14.54')
-ESPECIAL(';')
-PALABRA_RESERVADA('if')
-NUMERO_ENTERO('2')
-OPERADOR_RELACIONAL('>')
-NUMERO_ENTERO('3')
-PALABRA_RESERVADA('then')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-IDENTIFICADOR('a')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('3')
-ESPECIAL(';')
-PALABRA_RESERVADA('else')
-PALABRA_RESERVADA('if')
-NUMERO_ENTERO('4')
-OPERADOR_RELACIONAL('>')
-NUMERO_ENTERO('2')
-OPERADOR_LOGICO('&&')
-IDENTIFICADOR('true')
-PALABRA_RESERVADA('then')
-IDENTIFICADOR('b')
-OPERADOR_ASIGNACION('=')
-NUMERO_REAL('3.2')
-ESPECIAL(';')
-PALABRA_RESERVADA('else')
-IDENTIFICADOR('b')
-OPERADOR_ASIGNACION('=')
-NUMERO_REAL('5.0')
-ESPECIAL(';')
-PALABRA_RESERVADA('end')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-IDENTIFICADOR('y')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('1')
-ESPECIAL(';')
-PALABRA_RESERVADA('end')
-IDENTIFICADOR('a')
-OPERADOR_ARITMETICO('++')
-ESPECIAL(';')
-IDENTIFICADOR('c')
-OPERADOR_ARITMETICO('--')
-ESPECIAL(';')
-IDENTIFICADOR('x')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('3')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('4')
-ESPECIAL(';')
-PALABRA_RESERVADA('do')
-IDENTIFICADOR('y')
-OPERADOR_ASIGNACION('=')
-ESPECIAL('(')
-IDENTIFICADOR('y')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('1')
-ESPECIAL(')')
-OPERADOR_ARITMETICO('*')
-NUMERO_ENTERO('2')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('1')
-ESPECIAL(';')
-PALABRA_RESERVADA('while')
-IDENTIFICADOR('x')
-OPERADOR_RELACIONAL('>')
-NUMERO_ENTERO('7')
-IDENTIFICADOR('x')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('6')
-OPERADOR_ARITMETICO('+')
-NUMERO_ENTERO('8')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('9')
-OPERADOR_ARITMETICO('*')
-NUMERO_ENTERO('8')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('3')
-ESPECIAL(';')
-PALABRA_RESERVADA('cin')
-OPERADOR_RELACIONAL('>>')
-IDENTIFICADOR('x')
-ESPECIAL(';')
-IDENTIFICADOR('mas')
-OPERADOR_ASIGNACION('=')
-NUMERO_ENTERO('36')
-OPERADOR_ARITMETICO('/')
-NUMERO_ENTERO('7')
-ESPECIAL(';')
-PALABRA_RESERVADA('end')
-IDENTIFICADOR('until')
-IDENTIFICADOR('y')
-OPERADOR_RELACIONAL('==')
-NUMERO_ENTERO('5')
-PALABRA_RESERVADA('while')
-IDENTIFICADOR('y')
-OPERADOR_RELACIONAL('==')
-NUMERO_ENTERO('0')
-PALABRA_RESERVADA('cin')
-OPERADOR_RELACIONAL('>>')
-IDENTIFICADOR('mas')
-ESPECIAL(';')
-PALABRA_RESERVADA('cout')
-OPERADOR_RELACIONAL('<<')
-IDENTIFICADOR('x')
-ESPECIAL(';')
-PALABRA_RESERVADA('end')
-ESPECIAL('}')
+PALABRA_RESERVADA('main') en línea 1, columna 1
+ESPECIAL('{') en línea 1, columna 6
+PALABRA_RESERVADA('int') en línea 2, columna 5
+IDENTIFICADOR('x') en línea 2, columna 9
+ESPECIAL(',') en línea 2, columna 10
+IDENTIFICADOR('y') en línea 2, columna 12
+ESPECIAL(',') en línea 2, columna 13
+IDENTIFICADOR('z') en línea 2, columna 15
+ESPECIAL(';') en línea 2, columna 16
+PALABRA_RESERVADA('float') en línea 3, columna 5
+IDENTIFICADOR('a') en línea 3, columna 11
+ESPECIAL(',') en línea 3, columna 12
+IDENTIFICADOR('b') en línea 3, columna 14
+ESPECIAL(',') en línea 3, columna 15
+IDENTIFICADOR('c') en línea 3, columna 17
+ESPECIAL(';') en línea 3, columna 18
+IDENTIFICADOR('suma') en línea 4, columna 5
+OPERADOR_ASIGNACION('=') en línea 4, columna 10
+NUMERO_ENTERO('45') en línea 4, columna 12
+ESPECIAL(';') en línea 4, columna 14
+IDENTIFICADOR('x') en línea 5, columna 5
+OPERADOR_ASIGNACION('=') en línea 5, columna 7
+NUMERO_REAL('32.32') en línea 5, columna 9
+ESPECIAL(';') en línea 5, columna 14
+IDENTIFICADOR('x') en línea 6, columna 5
+OPERADOR_ASIGNACION('=') en línea 6, columna 7
+NUMERO_ENTERO('23') en línea 6, columna 9
+ESPECIAL(';') en línea 6, columna 11
+IDENTIFICADOR('y') en línea 7, columna 5
+OPERADOR_ASIGNACION('=') en línea 7, columna 7
+NUMERO_ENTERO('2') en línea 7, columna 9
+OPERADOR_ARITMETICO('+') en línea 7, columna 11
+NUMERO_ENTERO('3') en línea 7, columna 14
+OPERADOR_ARITMETICO('-') en línea 7, columna 16
+NUMERO_ENTERO('1') en línea 7, columna 19
+ESPECIAL(';') en línea 7, columna 20
+IDENTIFICADOR('z') en línea 8, columna 5
+OPERADOR_ASIGNACION('=') en línea 8, columna 7
+IDENTIFICADOR('y') en línea 8, columna 9
+OPERADOR_ARITMETICO('+') en línea 8, columna 11
+NUMERO_ENTERO('7') en línea 8, columna 14
+ESPECIAL(';') en línea 8, columna 15
+IDENTIFICADOR('y') en línea 9, columna 5
+OPERADOR_ASIGNACION('=') en línea 9, columna 7
+IDENTIFICADOR('y') en línea 9, columna 9
+OPERADOR_ARITMETICO('+') en línea 9, columna 11
+NUMERO_ENTERO('1') en línea 9, columna 14
+ESPECIAL(';') en línea 9, columna 15
+IDENTIFICADOR('a') en línea 10, columna 5
+OPERADOR_ASIGNACION('=') en línea 10, columna 6
+NUMERO_REAL('24.0') en línea 10, columna 7
+OPERADOR_ARITMETICO('+') en línea 10, columna 11
+NUMERO_ENTERO('4') en línea 10, columna 13
+OPERADOR_ARITMETICO('-') en línea 10, columna 14
+NUMERO_ENTERO('1') en línea 10, columna 16
+OPERADOR_ARITMETICO('/') en línea 10, columna 17
+NUMERO_ENTERO('3') en línea 10, columna 19
+OPERADOR_ARITMETICO('*') en línea 10, columna 20
+NUMERO_ENTERO('2') en línea 10, columna 22
+OPERADOR_ARITMETICO('+') en línea 10, columna 23
+NUMERO_ENTERO('34') en línea 10, columna 25
+OPERADOR_ARITMETICO('-') en línea 10, columna 27
+NUMERO_ENTERO('1') en línea 10, columna 29
+ESPECIAL(';') en línea 10, columna 30
+IDENTIFICADOR('x') en línea 11, columna 5
+OPERADOR_ASIGNACION('=') en línea 11, columna 6
+ESPECIAL('(') en línea 11, columna 7
+NUMERO_ENTERO('5') en línea 11, columna 8
+OPERADOR_ARITMETICO('-') en línea 11, columna 9
+NUMERO_ENTERO('3') en línea 11, columna 11
+ESPECIAL(')') en línea 11, columna 12
+OPERADOR_ARITMETICO('*') en línea 11, columna 13
+ESPECIAL('(') en línea 11, columna 15
+NUMERO_ENTERO('8') en línea 11, columna 16
+OPERADOR_ARITMETICO('/') en línea 11, columna 17
+NUMERO_ENTERO('2') en línea 11, columna 19
+ESPECIAL(')') en línea 11, columna 20
+ESPECIAL(';') en línea 11, columna 21
+IDENTIFICADOR('y') en línea 12, columna 5
+OPERADOR_ASIGNACION('=') en línea 12, columna 6
+NUMERO_ENTERO('5') en línea 12, columna 7
+OPERADOR_ARITMETICO('+') en línea 12, columna 8
+NUMERO_ENTERO('3') en línea 12, columna 10
+OPERADOR_ARITMETICO('-') en línea 12, columna 11
+NUMERO_ENTERO('2') en línea 12, columna 13
+OPERADOR_ARITMETICO('*') en línea 12, columna 14
+NUMERO_ENTERO('4') en línea 12, columna 16
+OPERADOR_ARITMETICO('/') en línea 12, columna 17
+NUMERO_ENTERO('7') en línea 12, columna 19
+OPERADOR_ARITMETICO('-') en línea 12, columna 20
+NUMERO_ENTERO('9') en línea 12, columna 22
+ESPECIAL(';') en línea 12, columna 23
+IDENTIFICADOR('z') en línea 13, columna 5
+OPERADOR_ASIGNACION('=') en línea 13, columna 7
+NUMERO_ENTERO('8') en línea 13, columna 9
+OPERADOR_ARITMETICO('/') en línea 13, columna 11
+NUMERO_ENTERO('2') en línea 13, columna 14
+OPERADOR_ARITMETICO('+') en línea 13, columna 16
+NUMERO_ENTERO('15') en línea 13, columna 19
+OPERADOR_ARITMETICO('*') en línea 13, columna 22
+NUMERO_ENTERO('4') en línea 13, columna 25
+ESPECIAL(';') en línea 13, columna 26
+IDENTIFICADOR('y') en línea 14, columna 5
+OPERADOR_ASIGNACION('=') en línea 14, columna 7
+NUMERO_REAL('14.54') en línea 14, columna 9
+ESPECIAL(';') en línea 14, columna 14
+PALABRA_RESERVADA('if') en línea 15, columna 5
+NUMERO_ENTERO('2') en línea 15, columna 8
+OPERADOR_RELACIONAL('>') en línea 15, columna 9
+NUMERO_ENTERO('3') en línea 15, columna 10
+PALABRA_RESERVADA('then') en línea 15, columna 12
+IDENTIFICADOR('y') en línea 16, columna 9
+OPERADOR_ASIGNACION('=') en línea 16, columna 11
+IDENTIFICADOR('a') en línea 16, columna 13
+OPERADOR_ARITMETICO('+') en línea 16, columna 15
+NUMERO_ENTERO('3') en línea 16, columna 18
+ESPECIAL(';') en línea 16, columna 19
+PALABRA_RESERVADA('else') en línea 17, columna 5
+PALABRA_RESERVADA('if') en línea 18, columna 9
+NUMERO_ENTERO('4') en línea 18, columna 12
+OPERADOR_RELACIONAL('>') en línea 18, columna 13
+NUMERO_ENTERO('2') en línea 18, columna 14
+OPERADOR_LOGICO('&&') en línea 18, columna 16
+IDENTIFICADOR('true') en línea 18, columna 19
+PALABRA_RESERVADA('then') en línea 18, columna 24
+IDENTIFICADOR('b') en línea 19, columna 13
+OPERADOR_ASIGNACION('=') en línea 19, columna 15
+NUMERO_REAL('3.2') en línea 19, columna 17
+ESPECIAL(';') en línea 19, columna 20
+PALABRA_RESERVADA('else') en línea 20, columna 9
+IDENTIFICADOR('b') en línea 21, columna 13
+OPERADOR_ASIGNACION('=') en línea 21, columna 15
+NUMERO_REAL('5.0') en línea 21, columna 17
+ESPECIAL(';') en línea 21, columna 20
+PALABRA_RESERVADA('end') en línea 22, columna 9
+IDENTIFICADOR('y') en línea 23, columna 9
+OPERADOR_ASIGNACION('=') en línea 23, columna 11
+IDENTIFICADOR('y') en línea 23, columna 13
+OPERADOR_ARITMETICO('+') en línea 23, columna 15
+NUMERO_ENTERO('1') en línea 23, columna 18
+ESPECIAL(';') en línea 23, columna 19
+PALABRA_RESERVADA('end') en línea 24, columna 5
+IDENTIFICADOR('a') en línea 25, columna 5
+OPERADOR_ARITMETICO('++') en línea 25, columna 6
+ESPECIAL(';') en línea 25, columna 10
+IDENTIFICADOR('c') en línea 26, columna 5
+OPERADOR_ARITMETICO('--') en línea 26, columna 6
+ESPECIAL(';') en línea 26, columna 10
+IDENTIFICADOR('x') en línea 27, columna 5
+OPERADOR_ASIGNACION('=') en línea 27, columna 7
+NUMERO_ENTERO('3') en línea 27, columna 9
+OPERADOR_ARITMETICO('+') en línea 27, columna 11
+NUMERO_ENTERO('4') en línea 27, columna 14
+ESPECIAL(';') en línea 27, columna 15
+PALABRA_RESERVADA('do') en línea 28, columna 5
+IDENTIFICADOR('y') en línea 29, columna 9
+OPERADOR_ASIGNACION('=') en línea 29, columna 11
+ESPECIAL('(') en línea 29, columna 13
+IDENTIFICADOR('y') en línea 29, columna 14
+OPERADOR_ARITMETICO('+') en línea 29, columna 16
+NUMERO_ENTERO('1') en línea 29, columna 19
+ESPECIAL(')') en línea 29, columna 20
+OPERADOR_ARITMETICO('*') en línea 29, columna 22
+NUMERO_ENTERO('2') en línea 29, columna 25
+OPERADOR_ARITMETICO('+') en línea 29, columna 27
+NUMERO_ENTERO('1') en línea 29, columna 30
+ESPECIAL(';') en línea 29, columna 31
+PALABRA_RESERVADA('while') en línea 30, columna 9
+IDENTIFICADOR('x') en línea 30, columna 15
+OPERADOR_RELACIONAL('>') en línea 30, columna 17
+NUMERO_ENTERO('7') en línea 30, columna 19
+IDENTIFICADOR('x') en línea 31, columna 13
+OPERADOR_ASIGNACION('=') en línea 31, columna 15
+NUMERO_ENTERO('6') en línea 31, columna 17
+OPERADOR_ARITMETICO('+') en línea 31, columna 19
+NUMERO_ENTERO('8') en línea 31, columna 22
+OPERADOR_ARITMETICO('/') en línea 31, columna 24
+NUMERO_ENTERO('9') en línea 31, columna 27
+OPERADOR_ARITMETICO('*') en línea 31, columna 29
+NUMERO_ENTERO('8') en línea 31, columna 32
+OPERADOR_ARITMETICO('/') en línea 31, columna 34
+NUMERO_ENTERO('3') en línea 31, columna 37
+ESPECIAL(';') en línea 31, columna 38
+PALABRA_RESERVADA('cin') en línea 32, columna 13
+OPERADOR_RELACIONAL('>>') en línea 32, columna 17
+IDENTIFICADOR('x') en línea 32, columna 20
+ESPECIAL(';') en línea 32, columna 21
+IDENTIFICADOR('mas') en línea 33, columna 13
+OPERADOR_ASIGNACION('=') en línea 33, columna 17
+NUMERO_ENTERO('36') en línea 33, columna 19
+OPERADOR_ARITMETICO('/') en línea 33, columna 22
+NUMERO_ENTERO('7') en línea 33, columna 25
+ESPECIAL(';') en línea 33, columna 26
+PALABRA_RESERVADA('end') en línea 34, columna 9
+IDENTIFICADOR('until') en línea 35, columna 5
+IDENTIFICADOR('y') en línea 35, columna 11
+OPERADOR_RELACIONAL('==') en línea 35, columna 13
+NUMERO_ENTERO('5') en línea 35, columna 16
+PALABRA_RESERVADA('while') en línea 36, columna 5
+IDENTIFICADOR('y') en línea 36, columna 11
+OPERADOR_RELACIONAL('==') en línea 36, columna 13
+NUMERO_ENTERO('0') en línea 36, columna 16
+PALABRA_RESERVADA('cin') en línea 37, columna 9
+OPERADOR_RELACIONAL('>>') en línea 37, columna 13
+IDENTIFICADOR('mas') en línea 37, columna 16
+ESPECIAL(';') en línea 37, columna 19
+PALABRA_RESERVADA('cout') en línea 38, columna 9
+OPERADOR_RELACIONAL('<<') en línea 38, columna 14
+IDENTIFICADOR('x') en línea 38, columna 17
+ESPECIAL(';') en línea 38, columna 18
+PALABRA_RESERVADA('end') en línea 39, columna 5
+ESPECIAL('}') en línea 40, columna 1

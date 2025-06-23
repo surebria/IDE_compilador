@@ -114,7 +114,7 @@ class Token:
         if self.tipo == 'ERROR':
             return f"{self.tipo}('{self.valor}') en línea {self.linea}, columna {self.columna}"
         else:
-            return f"{self.tipo}('{self.valor}')"
+            return f"{self.tipo}('{self.valor}') en línea {self.linea}, columna {self.columna}"
 
 def analizador_lexico(texto):
     tokens = []
@@ -307,7 +307,7 @@ class ErrorSintactico:
         self.columna = columna
     
     def __str__(self):
-        return f"Error Sintáctico: {self.mensaje} en línea {self.linea}, columna {self.columna}"
+        return f"Error: {self.mensaje} en línea {self.linea}, columna {self.columna}"
 
 class NodoAST:
     def __init__(self, tipo, valor=None):
@@ -571,8 +571,7 @@ class AnalizadorSintactico:
 
         while (self.token_actual() and
             not self.coincidir('}') and not self.coincidir('end') and
-            not self.coincidir('else') and not self.coincidir('while') and
-            not self.coincidir('until')):
+            not self.coincidir('else') and not self.coincidir('until')):
 
             # VALIDACIÓN: Si encontramos un ';' al inicio, es un error
             if self.token_actual().valor == ';':
@@ -603,8 +602,7 @@ class AnalizadorSintactico:
                             # Verificar si ahora podemos continuar
                             if (self.token_actual() and 
                                 (self.coincidir('}') or self.coincidir('end') or 
-                                self.coincidir('else') or self.coincidir('while') or 
-                                self.coincidir('until'))):
+                                self.coincidir('else') or self.coincidir('until'))):
                                 break
                     else:
                         # sentencia() consumió algunos tokens pero falló, continuar
@@ -1018,16 +1016,16 @@ class AnalizadorSintactico:
         """repeticion → do lista_sentencias while expresion | do lista_sentencias until expresion"""
         print("Analizando repetición (do-while/do-until)...")
         nodo = NodoAST("repeticion")
-    
+
         # Consumir 'do'
         if not self.consumir('do'):
             return None
-    
+
         # Consumir lista de sentencias
         lista = self.lista_sentencias()
         if lista:
             nodo.agregar_hijo(lista)
-    
+
         # Verificar si es while o until
         if self.coincidir('while'):
             self.avanzar()  # Consumir 'while'
@@ -1042,8 +1040,6 @@ class AnalizadorSintactico:
                 self.agregar_error("Se esperaba una expresión después de 'while'",
                                 self.obtener_ultima_posicion_valida())
         
-            # SIN PUNTO Y COMA - según tu gramática
-        
         elif self.coincidir('until'):
             self.avanzar()  # Consumir 'until'
             nodo_tipo = NodoAST("tipo_repeticion", "until")
@@ -1056,9 +1052,7 @@ class AnalizadorSintactico:
             else:
                 self.agregar_error("Se esperaba una expresión después de 'until'",
                                 self.obtener_ultima_posicion_valida())
-        
-            # SIN PUNTO Y COMA - según tu gramática
-            
+                
         else:
             self.agregar_error("Se esperaba 'while' o 'until' después del bloque 'do'",
                             self.obtener_ultima_posicion_valida())
@@ -1185,7 +1179,7 @@ class AnalizadorSintactico:
             self.agregar_error(f"Error interno del analizador: {str(e)}", self.obtener_ultima_posicion_valida())
             return None, self.errores
 
-# Funciones auxiliares
+# lectura Lexico
 def leer_tokens_desde_archivo(nombre_archivo="tokens.txt"):
     """
     Lee tokens desde un archivo de texto generado por el analizador léxico

@@ -164,29 +164,46 @@ programa
                 componente
               suma_op
               componente
+          iteracion
+            expresion_relacional
+              componente
+              rel_op
+              componente
+            lista_sentencias
+              asignacion
+                id
+                expresion_simple
+                  componente
+                  suma_op
+                  termino
+                    componente
+                    mult_op
+                    componente
+                    mult_op
+                    componente
+                    mult_op
+                    componente
+              sent_in
+                id
+              asignacion
+                id
+                termino
+                  componente
+                  mult_op
+                  componente
         tipo_repeticion
         expresion_relacional
           componente
           rel_op
           componente
-      asignacion
-        id
-        expresion_simple
+      iteracion
+        expresion_relacional
           componente
-          suma_op
-          termino
-            componente
-            mult_op
-            componente
-            mult_op
-            componente
-            mult_op
-            componente
-      sent_in
-        id
-      asignacion
-        id
-        termino
+          rel_op
           componente
-          mult_op
-          componente
+        lista_sentencias
+          sent_in
+            id
+          sent_out
+            salida
+              componente
