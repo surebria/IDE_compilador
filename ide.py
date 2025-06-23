@@ -548,8 +548,6 @@ class CompilerIDE(QMainWindow):
                         else:
                             texto = f"{nodo_ast.tipo}"
 
-                        if nodo_ast.linea and nodo_ast.columna:
-                            texto += f" (L{nodo_ast.linea}:C{nodo_ast.columna})"
 
                         item = QTreeWidgetItem([texto])
                         if padre_item:
@@ -575,7 +573,7 @@ class CompilerIDE(QMainWindow):
                     errores_texto += f"Error {i}: {error}\n"
                 self.error_sintactico.setPlainText(errores_texto)
             else:
-                self.error_sintactico.setPlainText("✓ No se encontraron errores sintácticos")
+                self.error_sintactico.setPlainText(" No se encontraron errores sintácticos")
             
 
             ast_texto = mostrar_ast_texto(ast) if ast else "No se pudo generar el AST debido a errores sintácticos"

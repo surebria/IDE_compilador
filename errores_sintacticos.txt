@@ -1,3 +1,2 @@
-Error Sintáctico: Se esperaba 'then' después de la condición en el 'if' en línea 123, columna 1
-Error Sintáctico: Se esperaba '}' al final del programa en línea 169, columna 1
-Error Sintáctico: Token inesperado después del final del programa: 'x' (IDENTIFICADOR) en línea 169, columna 1
+Error Sintáctico: Se esperaba '}' al final del programa en línea 194, columna 1
+Error Sintáctico: Token inesperado después del final del programa: 'end' (PALABRA_RESERVADA) en línea 194, columna 1

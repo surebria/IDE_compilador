@@ -1,145 +1,192 @@
 programa
   lista_declaracion
     declaracion_variable
-      tipo: int
+      tipo
       identificador
-        id: x
-        id: y
-        id: z
+        id
+        id
+        id
     declaracion_variable
-      tipo: float
+      tipo
       identificador
-        id: a
-        id: b
-        id: c
+        id
+        id
+        id
     lista_sentencias
       asignacion
-        id: suma
-        componente: 45 (L19:C1)
+        id
+        componente
       asignacion
-        id: x
-        componente: 32.32 (L23:C1)
+        id
+        componente
       asignacion
-        id: x
-        componente: 23 (L27:C1)
+        id
+        componente
       asignacion
-        id: y
+        id
         expresion_simple
-          componente: 2 (L31:C1)
-          suma_op: +
-          componente: 3 (L33:C1)
-          suma_op: -
-          componente: 1 (L35:C1)
+          componente
+          suma_op
+          componente
+          suma_op
+          componente
       asignacion
-        id: z
+        id
         expresion_simple
-          componente: y (L39:C1)
-          suma_op: +
-          componente: 7 (L41:C1)
+          componente
+          suma_op
+          componente
       asignacion
-        id: y
+        id
         expresion_simple
-          componente: y (L45:C1)
-          suma_op: +
-          componente: 1 (L47:C1)
+          componente
+          suma_op
+          componente
       asignacion
-        id: a
+        id
         expresion_simple
-          componente: 24.0 (L51:C1)
-          suma_op: +
-          componente: 4 (L53:C1)
-          suma_op: -
+          componente
+          suma_op
+          componente
+          suma_op
           termino
-            componente: 1 (L55:C1)
-            mult_op: /
-            componente: 3 (L57:C1)
-            mult_op: *
-            componente: 2 (L59:C1)
-          suma_op: +
-          componente: 34 (L61:C1)
-          suma_op: -
-          componente: 1 (L63:C1)
+            componente
+            mult_op
+            componente
+            mult_op
+            componente
+          suma_op
+          componente
+          suma_op
+          componente
       asignacion
-        id: x
+        id
         termino
           expresion_simple
-            componente: 5 (L68:C1)
-            suma_op: -
-            componente: 3 (L70:C1)
-          mult_op: *
+            componente
+            suma_op
+            componente
+          mult_op
           termino
-            componente: 8 (L74:C1)
-            mult_op: /
-            componente: 2 (L76:C1)
+            componente
+            mult_op
+            componente
       asignacion
-        id: y
+        id
         expresion_simple
-          componente: 5 (L81:C1)
-          suma_op: +
-          componente: 3 (L83:C1)
-          suma_op: -
+          componente
+          suma_op
+          componente
+          suma_op
           termino
-            componente: 2 (L85:C1)
-            mult_op: *
-            componente: 4 (L87:C1)
-            mult_op: /
-            componente: 7 (L89:C1)
-          suma_op: -
-          componente: 9 (L91:C1)
+            componente
+            mult_op
+            componente
+            mult_op
+            componente
+          suma_op
+          componente
       asignacion
-        id: z
+        id
         expresion_simple
           termino
-            componente: 8 (L95:C1)
-            mult_op: /
-            componente: 2 (L97:C1)
-          suma_op: +
+            componente
+            mult_op
+            componente
+          suma_op
           termino
-            componente: 15 (L99:C1)
-            mult_op: *
-            componente: 4 (L101:C1)
+            componente
+            mult_op
+            componente
       asignacion
-        id: y
-        componente: 14.54 (L105:C1)
+        id
+        componente
       seleccion
         expresion_relacional
-          componente: 2 (L108:C1)
-          rel_op: >
-          componente: 3 (L110:C1)
+          componente
+          rel_op
+          componente
         lista_sentencias
           asignacion
-            id: y
+            id
             expresion_simple
-              componente: a (L114:C1)
-              suma_op: +
-              componente: 3 (L116:C1)
+              componente
+              suma_op
+              componente
         else
           lista_sentencias
             seleccion
-              expresion_relacional
-                componente: 4 (L120:C1)
-                rel_op: >
-                componente: 2 (L122:C1)
+              expresion_logica
+                expresion_relacional
+                  componente
+                  rel_op
+                  componente
+                log_op
+                componente
+              lista_sentencias
+                asignacion
+                  id
+                  componente
               else
                 lista_sentencias
                   asignacion
-                    id: b
-                    componente: 5.0 (L133:C1)
+                    id
+                    componente
             asignacion
-              id: y
+              id
               expresion_simple
-                componente: y (L138:C1)
-                suma_op: +
-                componente: 1 (L140:C1)
+                componente
+                suma_op
+                componente
       incremento_decremento
-        identificador: a
-        operador: ++
+        identificador
+        operador
       incremento_decremento
-        identificador: c
-        operador: --
+        identificador
+        operador
       asignacion
-        id: x
+        id
         expresion_simple
-          componente: 3 (L151:C1)
-          suma_op: +
-          componente: 4 (L153:C1)
+          componente
+          suma_op
+          componente
+      repeticion
+        lista_sentencias
+          asignacion
+            id
+            expresion_simple
+              termino
+                expresion_simple
+                  componente
+                  suma_op
+                  componente
+                mult_op
+                componente
+              suma_op
+              componente
+        tipo_repeticion
+        expresion_relacional
+          componente
+          rel_op
+          componente
+      asignacion
+        id
+        expresion_simple
+          componente
+          suma_op
+          termino
+            componente
+            mult_op
+            componente
+            mult_op
+            componente
+            mult_op
+            componente
+      sent_in
+        id
+      asignacion
+        id
+        termino
+          componente
+          mult_op
+          componente
