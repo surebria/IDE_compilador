@@ -321,6 +321,12 @@ class NodoAST:
         if hijo:
             self.hijos.append(hijo)
     
+    def set_posicion(self, linea, columna):
+        """Establece la posición del nodo"""
+        self.linea = linea
+        self.columna = columna
+        return self
+    
     def __str__(self):
         return f"NodoAST({self.tipo}, {self.valor})"
 
@@ -568,18 +574,24 @@ class AnalizadorSintactico:
     def declaracion_variable(self):
         """declaracion_variable → tipo identificador ;"""
         print("Analizando declaración de variable...")
-        nodo = NodoAST("declaracion_variable")
         
-        # Consumir tipo
+        # Capturar el token tipo
         token_tipo = self.token_actual()
         if not self.coincidir('int') and not self.coincidir('float') and not self.coincidir('bool'):
             return None
         
+        nodo = NodoAST("declaracion_variable")
+        # Establecer posición del nodo
+        if token_tipo:
+            nodo.set_posicion(token_tipo.linea, token_tipo.columna)
+        
         self.avanzar()  # Consumir el tipo
         nodo_tipo = NodoAST("tipo", token_tipo.valor)
+        if token_tipo:
+            nodo_tipo.set_posicion(token_tipo.linea, token_tipo.columna)
         nodo.agregar_hijo(nodo_tipo)
         
-        # Procesar identificadores según gramática: identificador → id | identificador , id
+        # Procesar identificadores según gramática
         nodo_identificador = self.identificador()
         if nodo_identificador:
             nodo.agregar_hijo(nodo_identificador)
@@ -589,32 +601,43 @@ class AnalizadorSintactico:
             self.sincronizar_hasta(self.tokens_sync_declaracion)
         
         return nodo
-    
+        
     def identificador(self):
         """identificador → id | identificador , id"""
         print("Analizando identificador...")
         nodo = NodoAST("identificador")
         
         # Primer identificador
-        token_id = self.consumir('IDENTIFICADOR', "Se esperaba identificador")
-        if token_id:
-            nodo_id = NodoAST("id", token_id.valor)
-            nodo.agregar_hijo(nodo_id)
-        else:
+        token_id = self.token_actual()
+        if not self.coincidir('IDENTIFICADOR'):
             return None
+        
+        # Establecer posición
+        if token_id:
+            nodo.set_posicion(token_id.linea, token_id.columna)
+        
+        self.avanzar()
+        nodo_id = NodoAST("id", token_id.valor)
+        # Establecer posición del nodo hijo
+        if token_id:
+            nodo_id.set_posicion(token_id.linea, token_id.columna)
+        nodo.agregar_hijo(nodo_id)
         
         # Identificadores adicionales separados por comas
         while self.coincidir(','):
             self.avanzar()  # Consumir la coma
-            token_id = self.consumir('IDENTIFICADOR', "Se esperaba identificador después de ','")
-            if token_id:
-                nodo_id = NodoAST("id", token_id.valor)
-                nodo.agregar_hijo(nodo_id)
-            else:
+            token_id = self.token_actual()
+            if not self.coincidir('IDENTIFICADOR'):
                 break
+            self.avanzar()
+            nodo_id = NodoAST("id", token_id.valor)
+            # Establecer posición
+            if token_id:
+                nodo_id.set_posicion(token_id.linea, token_id.columna)
+            nodo.agregar_hijo(nodo_id)
         
         return nodo
-    
+        
     def lista_sentencias(self):
         """lista_sentencias → lista_sentencias sentencia | ε"""
         print("Analizando lista de sentencias...")
@@ -708,21 +731,26 @@ class AnalizadorSintactico:
     def asignacion(self):
         """asignacion → id = sent_expresion"""
         print("Analizando asignación...")
-
-        # Consumir identificador
-        token_id = self.consumir('IDENTIFICADOR')
-        if not token_id:
+        
+        # Capturar identificador
+        token_id = self.token_actual()
+        if not self.coincidir('IDENTIFICADOR'):
             self.agregar_error("Se esperaba un identificador al inicio de la asignación",
                             self.obtener_ultima_posicion_valida())
             return None
-
-        nodo = NodoAST("asignacion", token_id.valor)  # Aquí va el nombre de la variable como valor
-
+        
+        nodo = NodoAST("asignacion", token_id.valor)
+        # Establecer posición
+        if token_id:
+            nodo.set_posicion(token_id.linea, token_id.columna)
+        
+        self.avanzar()
+        
         # Consumir '='
         if not self.consumir('=', "Se esperaba '=' después del identificador"):
             self.sincronizar_hasta([';'])
             return nodo
-
+        
         # Consumir sent_expresion
         expr = self.sent_expresion()
         if expr:
@@ -730,7 +758,7 @@ class AnalizadorSintactico:
         else:
             self.agregar_error("Se esperaba una expresión después del '='",
                             self.obtener_ultima_posicion_valida())
-
+        
         return nodo
 
 
@@ -1206,21 +1234,39 @@ class AnalizadorSintactico:
     def sent_in(self):
         """sent_in → cin >> id ;"""
         print("Analizando sentencia de entrada (cin)...")
+        
+        # Capturar el token 'cin' para obtener su posición
+        token_cin = self.token_actual()
         nodo = NodoAST("sent_in")
+        
+        # Establecer la posición del nodo sent_in
+        if token_cin:
+            nodo.set_posicion(token_cin.linea, token_cin.columna)
         
         # Consumir 'cin'
         self.consumir('cin')
         
-        # CORRECCIÓN: Consumir >> como un solo token
+        # Consumir >>
         if not self.consumir('>>', "Se esperaba '>>' después de cin"):
             self.sincronizar_hasta([';'])
             return nodo
         
         # Consumir identificador
-        token_id = self.consumir('IDENTIFICADOR', "Se esperaba identificador después de cin >>")
+        token_id = self.token_actual()
+        if not self.coincidir('IDENTIFICADOR'):
+            self.agregar_error("Se esperaba identificador después de cin >>", 
+                            self.obtener_ultima_posicion_valida())
+            self.sincronizar_hasta([';'])
+            return nodo
+        
+        # Crear nodo para el identificador
+        nodo_id = NodoAST("id", token_id.valor)
+        # Establecer la posición del identificador
         if token_id:
-            nodo_id = NodoAST("id", token_id.valor)
-            nodo.agregar_hijo(nodo_id)
+            nodo_id.set_posicion(token_id.linea, token_id.columna)
+        
+        nodo.agregar_hijo(nodo_id)
+        self.avanzar()  # Consumir el identificador
         
         # Consumir ';'
         if not self.consumir(';', "Se esperaba ';' después de la sentencia cin"):
@@ -1366,6 +1412,50 @@ class AnalizadorSintactico:
             self.agregar_error(f"Error interno del analizador: {str(e)}", self.obtener_ultima_posicion_valida())
             return None, self.errores
 
+    def procesar_declaracion(self, nodo, nodo_anotado):
+        """Procesa declaración de variables."""
+        tipo_dato = None
+        
+        # AGREGAR: Capturar posición del nodo de declaración
+        linea_decl = getattr(nodo, 'linea', 0)
+        columna_decl = getattr(nodo, 'columna', 0)
+        
+        # Obtener tipo de dato
+        for hijo in nodo.hijos:
+            if hijo.tipo == "tipo":
+                tipo_dato = hijo.valor
+                hijo_anotado = NodoAnotado("tipo", hijo.valor)
+                hijo_anotado.tipo_dato = tipo_dato
+                nodo_anotado.agregar_hijo(hijo_anotado)
+                break
+        
+        # Procesar identificadores
+        for hijo in nodo.hijos:
+            if hijo.tipo == "identificador":
+                for id_hijo in hijo.hijos:
+                    if id_hijo.tipo == "id":
+                        nombre_var = id_hijo.valor
+                        # CAMBIO: Usar la posición del id_hijo o del nodo padre
+                        linea = getattr(id_hijo, 'linea', None) or linea_decl or 0
+                        columna = getattr(id_hijo, 'columna', None) or columna_decl or 0
+                        
+                        # Declarar en tabla de símbolos
+                        success, error_msg = self.tabla_simbolos.declare(
+                            nombre_var, tipo_dato, linea, columna
+                        )
+                        
+                        if not success:
+                            self.report_error("DUPLICIDAD_DECLARACION", error_msg, linea, columna)
+                        
+                        # Anotar nodo
+                        id_anotado = NodoAnotado("id", nombre_var)
+                        id_anotado.tipo_dato = tipo_dato
+                        id_anotado.valor_calculado = None
+                        id_anotado.linea = linea
+                        id_anotado.columna = columna
+                        nodo_anotado.agregar_hijo(id_anotado)
+    
+        nodo_anotado.tipo_dato = tipo_dato
 # lectura Lexico
 def leer_tokens_desde_archivo(nombre_archivo="tokens.txt"):
     """

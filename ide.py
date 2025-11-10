@@ -743,16 +743,19 @@ class CompilerIDE(QMainWindow):
                     self.tabla_simbolos_widget.setItem(i, 3, QTableWidgetItem(simbolo.ambito))
                     
                     # Línea
-                    self.tabla_simbolos_widget.setItem(i, 4, QTableWidgetItem(str(simbolo.linea)))
-            
+                    linea_columna_str = f"{simbolo.linea}:{simbolo.columna}"
+                    self.tabla_simbolos_widget.setItem(i, 4, QTableWidgetItem(linea_columna_str))
+                    
             # ===== MOSTRAR ERRORES SEMÁNTICOS =====
             if errores_sem:
                 errores_texto = ""
                 for error in errores_sem:
+                    # CAMBIO AQUÍ: Los errores ya tienen formato correcto con línea y columna
                     errores_texto += f"{error}\n"
                 self.error_semantico.setPlainText(errores_texto)
             else:
                 self.error_semantico.setPlainText("No se encontraron errores semánticos")
+        
             
             # Guardar resultados en archivos
             try:

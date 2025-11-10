@@ -40,11 +40,27 @@ class Simbolo:
     def agregar_uso(self, linea, columna):
         """Registra un nuevo uso de la variable."""
         self.ubicaciones.append((linea, columna))
+
+    def agregar_ubicacion(self, linea, columna):
+        """Agrega una nueva ubicación (línea, columna) de uso del símbolo."""
+        if (linea, columna) not in self.ubicaciones:
+            self.ubicaciones.append((linea, columna))
     
     def get_ubicaciones_str(self):
         """Retorna las ubicaciones como string."""
         return "; ".join([f"{l}:{c}" for l, c in self.ubicaciones])
-    
+
+    def to_dict(self):
+        return {
+            "nombre": self.nombre,
+            "tipo": self.tipo,
+            "valor": self.valor,
+            "linea": self.linea, # Línea de declaración (original)
+            "columna": self.columna, # Columna de declaración (original)
+            "ambito": self.ambito,
+            # Formatea las ubicaciones: (Línea, Columna) -> "L:C, L:C, ..."
+            "ubicaciones_str": ", ".join([f"{l}:{c}" for l, c in self.ubicaciones])
+        }
     def __str__(self):
         return f"Simbolo({self.nombre}, {self.tipo}, valor={self.valor}, ámbito={self.ambito})"
 
@@ -177,7 +193,7 @@ class AnalizadorSemantico:
         
         # Otras incompatibilidades
         if tipo_dest == 'int' and tipo_src == 'float':
-            return False, f"No se puede asignar float a int sin conversión explícita"
+            return False, f"No se puede asignar float a int"
         
         if tipo_dest == 'bool' or tipo_src == 'bool':
             return False, f"Incompatibilidad de tipos: bool no es compatible con {tipo_src if tipo_dest == 'bool' else tipo_dest}"
@@ -205,10 +221,10 @@ class AnalizadorSemantico:
         
         # Crear nodo anotado
         nodo_anotado = NodoAnotado(nodo.tipo, nodo.valor)
-        nodo_anotado.linea = getattr(nodo, 'linea', 0)
-        nodo_anotado.columna = getattr(nodo, 'columna', 0)
+        nodo_anotado.linea = getattr(nodo, 'linea', 0) or 0
+        nodo_anotado.columna = getattr(nodo, 'columna', 0) or 0
         nodo_anotado.nodo_original = nodo
-        
+            
         # Procesar según tipo de nodo
         if nodo.tipo == "programa":
             self.procesar_programa(nodo, nodo_anotado)
@@ -279,9 +295,10 @@ class AnalizadorSemantico:
                 for id_hijo in hijo.hijos:
                     if id_hijo.tipo == "id":
                         nombre_var = id_hijo.valor
-                        linea = getattr(id_hijo, 'linea', 0)
-                        columna = getattr(id_hijo, 'columna', 0)
-                        
+                        linea = getattr(id_hijo, 'linea', 0) or getattr(nodo, 'linea', 0) or 0
+                        columna = getattr(id_hijo, 'columna', 0) or getattr(nodo, 'columna', 0) or 0
+                    
+                    
                         # Declarar en tabla de símbolos
                         success, error_msg = self.tabla_simbolos.declare(
                             nombre_var, tipo_dato, linea, columna
@@ -303,8 +320,8 @@ class AnalizadorSemantico:
     def procesar_asignacion(self, nodo, nodo_anotado):
         """Procesa asignación con verificación de tipos."""
         nombre_var = nodo.valor
-        linea = getattr(nodo, 'linea', 0)
-        columna = getattr(nodo, 'columna', 0)
+        linea = getattr(nodo, 'linea', 0) or 0
+        columna = getattr(nodo, 'columna', 0) or 0
         
         # Verificar que la variable esté declarada
         simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
@@ -598,8 +615,21 @@ class AnalizadorSemantico:
         for hijo in nodo.hijos:
             if hijo.tipo == "id":
                 nombre_var = hijo.valor
-                linea = getattr(hijo, 'linea', 0)
-                columna = getattr(hijo, 'columna', 0)
+                # Capturar línea y columna del nodo hijo, o del nodo padre si no está disponible
+                linea = getattr(hijo, 'linea', None)
+                columna = getattr(hijo, 'columna', None)
+                
+                # Si el hijo no tiene posición, intentar con el nodo padre
+                if linea is None or linea == 0:
+                    linea = getattr(nodo, 'linea', 0)
+                if columna is None or columna == 0:
+                    columna = getattr(nodo, 'columna', 0)
+                
+                # Si aún no hay posición válida, usar valores por defecto
+                if linea is None:
+                    linea = 0
+                if columna is None:
+                    columna = 0
                 
                 simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
                 
@@ -611,6 +641,32 @@ class AnalizadorSemantico:
                 id_anotado.linea = linea
                 id_anotado.columna = columna
                 nodo_anotado.agregar_hijo(id_anotado)
+
+    def procesar_id(self, nodo, nodo_anotado):
+        """Procesa un identificador (variable) en una expresión o asignación."""
+        nombre_var = nodo.valor
+        
+        # Obtener la posición del nodo hijo (ID) o usar la del padre si no está disponible
+        # (Esto ya lo tienes, pero asegúrate de que 'linea' y 'columna' sean las del USO actual)
+        
+        linea = getattr(nodo, 'linea', 0)
+        columna = getattr(nodo, 'columna', 0)
+        
+        # ... (Tu lógica de ajuste de línea/columna si es necesario)
+        
+        simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
+        
+        if not simbolo:
+            self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
+        else:
+            # 🚨 ¡NUEVO! Registrar la ubicación de USO (línea/columna actual)
+            simbolo.agregar_ubicacion(linea, columna)
+            
+        id_anotado = NodoAnotado("id", nombre_var)
+        id_anotado.tipo_dato = simbolo.tipo if simbolo else "desconocido"
+        id_anotado.linea = linea
+        id_anotada.columna = columna
+        nodo_anotado.agregar_hijo(id_anotado)
     
     def procesar_salida(self, nodo, nodo_anotado):
         """Procesa sentencia cout."""
