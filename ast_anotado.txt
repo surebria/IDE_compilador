@@ -1,0 +1,159 @@
+programa
+  main
+    declaracion_variable | Tipo: int
+      tipo: int | Tipo: int
+      id: x | Tipo: int
+      id: y | Tipo: int
+      id: z | Tipo: int
+    declaracion_variable | Tipo: float
+      tipo: float | Tipo: float
+      id: a | Tipo: float
+      id: b | Tipo: float
+      id: c | Tipo: float
+    asignacion: suma | Tipo: desconocido
+    asignacion: x | Tipo: int | Valor: 32.32
+      numero: 32.32 | Tipo: float | Valor: 32.32
+    asignacion: x | Tipo: int | Valor: 23
+      numero: 23 | Tipo: int | Valor: 23
+    asignacion: y | Tipo: int | Valor: 4
+      suma_op: - | Tipo: int | Valor: 4
+        suma_op: + | Tipo: int | Valor: 5
+          numero: 2 | Tipo: int | Valor: 2
+          numero: 3 | Tipo: int | Valor: 3
+        numero: 1 | Tipo: int | Valor: 1
+    asignacion: z | Tipo: int | Valor: 11
+      suma_op: + | Tipo: int | Valor: 11
+        id: y | Tipo: int | Valor: 4
+        numero: 7 | Tipo: int | Valor: 7
+    asignacion: y | Tipo: int | Valor: 5
+      suma_op: + | Tipo: int | Valor: 5
+        id: y | Tipo: int | Valor: 4
+        numero: 1 | Tipo: int | Valor: 1
+    asignacion: a | Tipo: float | Valor: 61.0
+      suma_op: - | Tipo: float | Valor: 61.0
+        suma_op: + | Tipo: float | Valor: 62.0
+          suma_op: - | Tipo: float | Valor: 28.0
+            suma_op: + | Tipo: float | Valor: 28.0
+              numero: 24.0 | Tipo: float | Valor: 24.0
+              numero: 4 | Tipo: int | Valor: 4
+            mult_op: * | Tipo: int | Valor: 0
+              mult_op: / | Tipo: int | Valor: 0
+                numero: 1 | Tipo: int | Valor: 1
+                numero: 3 | Tipo: int | Valor: 3
+              numero: 2 | Tipo: int | Valor: 2
+          numero: 34 | Tipo: int | Valor: 34
+        numero: 1 | Tipo: int | Valor: 1
+    asignacion: x | Tipo: int | Valor: 8
+      mult_op: * | Tipo: int | Valor: 8
+        suma_op: - | Tipo: int | Valor: 2
+          numero: 5 | Tipo: int | Valor: 5
+          numero: 3 | Tipo: int | Valor: 3
+        mult_op: / | Tipo: int | Valor: 4
+          numero: 8 | Tipo: int | Valor: 8
+          numero: 2 | Tipo: int | Valor: 2
+    asignacion: y | Tipo: int | Valor: -2
+      suma_op: - | Tipo: int | Valor: -2
+        suma_op: - | Tipo: int | Valor: 7
+          suma_op: + | Tipo: int | Valor: 8
+            numero: 5 | Tipo: int | Valor: 5
+            numero: 3 | Tipo: int | Valor: 3
+          mult_op: / | Tipo: int | Valor: 1
+            mult_op: * | Tipo: int | Valor: 8
+              numero: 2 | Tipo: int | Valor: 2
+              numero: 4 | Tipo: int | Valor: 4
+            numero: 7 | Tipo: int | Valor: 7
+        numero: 9 | Tipo: int | Valor: 9
+    asignacion: z | Tipo: int | Valor: 64
+      suma_op: + | Tipo: int | Valor: 64
+        mult_op: / | Tipo: int | Valor: 4
+          numero: 8 | Tipo: int | Valor: 8
+          numero: 2 | Tipo: int | Valor: 2
+        mult_op: * | Tipo: int | Valor: 60
+          numero: 15 | Tipo: int | Valor: 15
+          numero: 4 | Tipo: int | Valor: 4
+    asignacion: y | Tipo: int | Valor: 14.54
+      numero: 14.54 | Tipo: float | Valor: 14.54
+    seleccion
+      rel_op: >
+        numero: 2
+        numero: 3
+      lista_sentencias
+        asignacion: y | Tipo: int | Valor: 64.0
+          suma_op: + | Tipo: float | Valor: 64.0
+            id: a | Tipo: float | Valor: 61.0
+            numero: 3 | Tipo: int | Valor: 3
+      else
+        lista_sentencias
+          seleccion
+            log_op: &&
+              rel_op: >
+                numero: 4
+                numero: 2
+              bool: true
+            lista_sentencias
+              asignacion: b | Tipo: float | Valor: 3.2
+                numero: 3.2 | Tipo: float | Valor: 3.2
+            else
+              lista_sentencias
+                asignacion: b | Tipo: float | Valor: 5.0
+                  numero: 5.0 | Tipo: float | Valor: 5.0
+          asignacion: y | Tipo: int | Valor: 65
+            suma_op: + | Tipo: int | Valor: 65
+              id: y | Tipo: int | Valor: 64.0
+              numero: 1 | Tipo: int | Valor: 1
+    asignacion: a | Tipo: float | Valor: 1
+      expresion_simple: + | Tipo: int | Valor: 1
+        id: a | Tipo: float | Valor: 61.0
+        numero: 1 | Tipo: int | Valor: 1
+    asignacion: c | Tipo: float | Valor: 1
+      expresion_simple: - | Tipo: int | Valor: 1
+        id: c | Tipo: float
+        numero: 1 | Tipo: int | Valor: 1
+    asignacion: x | Tipo: int | Valor: 7
+      suma_op: + | Tipo: int | Valor: 7
+        numero: 3 | Tipo: int | Valor: 3
+        numero: 4 | Tipo: int | Valor: 4
+    repeticion
+      lista_sentencias
+        asignacion: y | Tipo: int | Valor: 133
+          suma_op: + | Tipo: int | Valor: 133
+            mult_op: * | Tipo: int | Valor: 132
+              suma_op: + | Tipo: int | Valor: 66
+                id: y | Tipo: int | Valor: 65
+                numero: 1 | Tipo: int | Valor: 1
+              numero: 2 | Tipo: int | Valor: 2
+            numero: 1 | Tipo: int | Valor: 1
+        iteracion
+          condicion
+            rel_op: >
+              id: x
+              numero: 7
+          lista_sentencias
+            asignacion: x | Tipo: int | Valor: 6
+              suma_op: + | Tipo: int | Valor: 6
+                numero: 6 | Tipo: int | Valor: 6
+                mult_op: / | Tipo: int | Valor: 0
+                  mult_op: * | Tipo: int | Valor: 0
+                    mult_op: / | Tipo: int | Valor: 0
+                      numero: 8 | Tipo: int | Valor: 8
+                      numero: 9 | Tipo: int | Valor: 9
+                    numero: 8 | Tipo: int | Valor: 8
+                  numero: 3 | Tipo: int | Valor: 3
+            sent_in
+              id: x | Tipo: int
+            asignacion: mas | Tipo: desconocido
+      condicion: until
+        rel_op: ==
+          id: y
+          numero: 5
+    iteracion
+      condicion
+        rel_op: ==
+          id: y
+          numero: 0
+      lista_sentencias
+        sent_in
+          id: mas | Tipo: desconocido
+        sent_out
+          salida | Tipo: int | Valor: 6
+            id: x | Tipo: int | Valor: 6

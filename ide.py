@@ -1,8 +1,7 @@
-
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
     QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar, QTreeWidget,
-    QTreeWidgetItem
+    QTreeWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView # Se agregaron estas importaciones
 )
 from PyQt6.QtGui import QAction, QColor, QPainter, QTextFormat, QFontMetrics, QIcon
 from PyQt6.QtCore import QRect, Qt, QSize, pyqtSlot
@@ -203,6 +202,13 @@ class CompilerIDE(QMainWindow):
         self.setGeometry(100, 100, 1000, 700)
         self.current_file = None
         
+        # Inicializar atributos que se crean dinámicamente o se acceden antes de load_editor
+        self.semantico_widget = None
+        self.tree_semantico = None
+        self.hash_table_widget = None
+        self.tabla_simbolos_widget = None
+        self.error_semantico = None # Se inicializa en load_editor.
+        
         self.initUI()
 
 
@@ -276,14 +282,14 @@ class CompilerIDE(QMainWindow):
         self.open_action.triggered.connect(self.open_file)
         self.save_action.triggered.connect(self.save_file)
         self.save_as_action.triggered.connect(self.save_file_as)
-        self.close_action.triggered.connect(self.close_file)
+        self.close_action.triggered.connect(self.close_file) # La conexión ahora funcionará
         self.exit_action.triggered.connect(self.close)
         
         self.new_action_toolbar.triggered.connect(self.new_file)
         self.open_action_toolbar.triggered.connect(self.open_file)
         self.save_action_toolbar.triggered.connect(self.save_file)
         self.save_as_action_toolbar.triggered.connect(self.save_file_as)
-        self.close_action_toolbar.triggered.connect(self.close_file)
+        self.close_action_toolbar.triggered.connect(self.close_file) # La conexión ahora funcionará
         
         file_menu.addAction(self.new_action)
         file_menu.addSeparator()
@@ -331,7 +337,11 @@ class CompilerIDE(QMainWindow):
         sintactico_menu.addAction(ver_ast_action)
         ###
         analizar_semantico_action = QAction("Analizar", self)
+        analizar_semantico_action.triggered.connect(lambda: self.ejecutar_analisis_semantico(cambiar_pestaña=True)) # Conexión a nuevo método
+        
         ver_tabla_simbolos_action = QAction("Ver Tabla de Símbolos", self)
+        ver_tabla_simbolos_action.triggered.connect(lambda: self.ejecutar_analisis_semantico(cambiar_pestaña=True)) # Conexión a nuevo método
+        
         semantico_menu.addAction(analizar_semantico_action)
         semantico_menu.addSeparator()
         semantico_menu.addAction(ver_tabla_simbolos_action)
@@ -437,9 +447,13 @@ class CompilerIDE(QMainWindow):
         # Agregar la pestaña sintáctico con el widget que contiene el TreeWidget
         self.tabs.addTab(self.sintactico_widget, "Sintáctico")
 
-        # Otras pestañas
-        self.tabs.addTab(QLabel("Salida Semántica"), "Semántico")
-        self.tabs.addTab(QLabel("Hash Table Resultados"), "Hash Table")
+        # Pestañas que serán creadas por los métodos crear_pestana_...
+        # Se agregan marcadores de posición temporal o se confía en la creación dinámica
+        # Para evitar problemas de orden al inicio, se agregan placeholders o se remueven después
+        # Ya que los métodos crear_pestana_... reemplazarán estas pestañas.
+        self.tabs.addTab(QLabel("Inicializando Pestaña Semántico..."), "Semántico")
+        self.tabs.addTab(QLabel("Inicializando Pestaña Hash Table..."), "Hash Table")
+        
         self.tabs.addTab(QLabel("Código Intermedio Resultados"), "Código Intermedio")
 
         # Alinear labels de pestañas vacías
@@ -461,8 +475,11 @@ class CompilerIDE(QMainWindow):
         self.error_sintactico.setReadOnly(True)
         self.errors_tabs.addTab(self.error_sintactico, "Errores Sintácticos")
 
-        # Otras pestañas de errores
-        self.errors_tabs.addTab(QLabel("Errores Semánticos"), "Errores Semánticos")
+        # Inicializar el widget de errores semánticos para que exista al inicio
+        self.error_semantico = QTextEdit()
+        self.error_semantico.setReadOnly(True)
+        self.errors_tabs.addTab(self.error_semantico, "Errores Semánticos") # Añadido correctamente
+
         self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
         
         # Alinear labels de pestañas vacías
@@ -493,6 +510,12 @@ class CompilerIDE(QMainWindow):
         # Establecer como central widget SOLO UNA VEZ
         self.setCentralWidget(self.container)
         
+        # Inicializar las pestañas dinámicas para que existan
+        self.crear_pestana_semantico()
+        self.crear_pestana_hash_table()
+        self.crear_pestana_errores_semanticos()
+
+
         # Initialize cursor position
         self.text_edit.update_cursor_position()
     
@@ -626,7 +649,253 @@ class CompilerIDE(QMainWindow):
             import traceback
             traceback.print_exc()
 
-#################################TERMINA############################
+    #################################MÉTODOS DEL ANÁLISIS SEMÁNTICO############################
+
+    def ejecutar_analisis_semantico(self, cambiar_pestaña=False):
+        """Ejecuta el análisis semántico completo"""
+        try:
+            # Primero ejecutar análisis sintáctico para obtener el AST
+            ast, errores_sint = analizador_sintactico("tokens.txt")
+            
+            if not ast:
+                self.status_label.setText("No se puede ejecutar análisis semántico sin AST válido")
+                # Mostrar errores sintácticos si hay
+                if errores_sint:
+                    errores_texto = "\n".join(errores_sint)
+                    self.error_sintactico.setPlainText(errores_texto)
+                    self.errors_tabs.setCurrentWidget(self.error_sintactico)
+                return
+            
+            # Importar el analizador semántico
+            try:
+                from analizador_semantico import ejecutar_analisis_semantico, NodoAnotado
+            except ImportError:
+                self.status_label.setText("Error: No se encontró 'analizador_semantico.py'")
+                return
+            
+            # Ejecutar análisis semántico
+            ast_anotado, tabla_simbolos, errores_sem = ejecutar_analisis_semantico(ast)
+            
+            # Crear pestañas si no existen (ya se llamaron en load_editor, pero se verifica)
+            if not hasattr(self, 'tree_semantico') or self.tree_semantico is None:
+                self.crear_pestana_semantico()
+            if not hasattr(self, 'tabla_simbolos_widget') or self.tabla_simbolos_widget is None:
+                self.crear_pestana_hash_table()
+            if not hasattr(self, 'error_semantico') or self.error_semantico is None:
+                self.crear_pestana_errores_semanticos()
+
+            # ===== MOSTRAR ÁRBOL ANOTADO EN PESTAÑA SEMÁNTICO =====
+            self.tree_semantico.clear()
+            
+            if ast_anotado:
+                def agregar_nodo_anotado(nodo_ast, padre_item):
+                    try:
+                        # Construir texto del nodo
+                        texto = f"{nodo_ast.tipo}"
+                        if nodo_ast.valor:
+                            texto += f": {nodo_ast.valor}"
+                        
+                        # Agregar tipo de dato si existe
+                        if hasattr(nodo_ast, 'tipo_dato') and nodo_ast.tipo_dato:
+                            texto += f" | Tipo: {nodo_ast.tipo_dato}"
+                        
+                        # Agregar valor calculado si existe
+                        if hasattr(nodo_ast, 'valor_calculado') and nodo_ast.valor_calculado is not None:
+                            texto += f" | Valor: {nodo_ast.valor_calculado}"
+                        
+                        item = QTreeWidgetItem([texto])
+                        
+                        if padre_item:
+                            padre_item.addChild(item)
+                        else:
+                            self.tree_semantico.addTopLevelItem(item)
+                        
+                        for hijo in nodo_ast.hijos:
+                            agregar_nodo_anotado(hijo, item)
+                            
+                    except Exception as e:
+                        print(f"Error al agregar nodo anotado: {e}")
+                
+                agregar_nodo_anotado(ast_anotado, None)
+                self.tree_semantico.expandAll()
+            else:
+                self.tree_semantico.addTopLevelItem(QTreeWidgetItem(["No se pudo generar el AST anotado"]))
+            
+            # ===== MOSTRAR TABLA DE SÍMBOLOS EN PESTAÑA HASH TABLE =====
+            self.tabla_simbolos_widget.setRowCount(0)
+            
+            simbolos = tabla_simbolos.listar_simbolos()
+            if simbolos:
+                self.tabla_simbolos_widget.setRowCount(len(simbolos))
+                
+                for i, simbolo in enumerate(simbolos):
+                    # Nombre
+                    self.tabla_simbolos_widget.setItem(i, 0, QTableWidgetItem(simbolo.nombre))
+                    
+                    # Tipo
+                    self.tabla_simbolos_widget.setItem(i, 1, QTableWidgetItem(simbolo.tipo or ""))
+                    
+                    # Valor
+                    valor_str = str(simbolo.valor) if simbolo.valor is not None else "Sin inicializar"
+                    self.tabla_simbolos_widget.setItem(i, 2, QTableWidgetItem(valor_str))
+                    
+                    # Ámbito
+                    self.tabla_simbolos_widget.setItem(i, 3, QTableWidgetItem(simbolo.ambito))
+                    
+                    # Línea
+                    self.tabla_simbolos_widget.setItem(i, 4, QTableWidgetItem(str(simbolo.linea)))
+            
+            # ===== MOSTRAR ERRORES SEMÁNTICOS =====
+            if errores_sem:
+                errores_texto = ""
+                for error in errores_sem:
+                    errores_texto += f"{error}\n"
+                self.error_semantico.setPlainText(errores_texto)
+            else:
+                self.error_semantico.setPlainText("No se encontraron errores semánticos")
+            
+            # Guardar resultados en archivos
+            try:
+                # Guardar AST anotado
+                with open("ast_anotado.txt", "w", encoding="utf-8") as f:
+                    f.write(self.generar_texto_ast_anotado(ast_anotado))
+                
+                # Guardar tabla de símbolos
+                with open("tabla_simbolos.txt", "w", encoding="utf-8") as f:
+                    f.write("TABLA DE SÍMBOLOS\n")
+                    f.write("="*80 + "\n")
+                    f.write(f"{'Nombre':<15} {'Tipo':<10} {'Valor':<15} {'Ámbito':<10} {'Línea':<10}\n")
+                    f.write("-"*80 + "\n")
+                    for simbolo in simbolos:
+                        valor_str = str(simbolo.valor) if simbolo.valor is not None else "N/A"
+                        f.write(f"{simbolo.nombre:<15} {simbolo.tipo:<10} {valor_str:<15} {simbolo.ambito:<10} {simbolo.linea:<10}\n")
+                
+                # Guardar errores semánticos
+                with open("errores_semanticos.txt", "w", encoding="utf-8") as f:
+                    if errores_sem:
+                        for error in errores_sem:
+                            f.write(f"{error}\n")
+                    else:
+                        f.write("No se encontraron errores semánticos\n")
+                
+                print("Archivos del análisis semántico guardados exitosamente")
+            
+            except Exception as e:
+                print(f"Error al guardar archivos del análisis semántico: {e}")
+            
+            # Cambiar a pestañas si se solicita
+            if cambiar_pestaña:
+                self.tabs.setCurrentWidget(self.semantico_widget)
+                self.errors_tabs.setCurrentWidget(self.error_semantico)
+            
+            # Actualizar status
+            if errores_sem:
+                self.status_label.setText(f"Análisis semántico completado con {len(errores_sem)} errores")
+            else:
+                self.status_label.setText("Análisis semántico completado exitosamente")
+            
+            print(f"Análisis semántico completado:")
+            print(f"- Símbolos en tabla: {len(simbolos)}")
+            print(f"- Errores semánticos: {len(errores_sem)}")
+            
+        except Exception as e:
+            error_msg = f"Error durante el análisis semántico: {str(e)}"
+            print(error_msg)
+            import traceback
+            traceback.print_exc()
+            self.status_label.setText("Error en análisis semántico")
+
+
+    def crear_pestana_semantico(self):
+        """Crea la pestaña de semántico con el TreeWidget para AST anotado"""
+        self.semantico_widget = QWidget()
+        semantico_layout = QVBoxLayout(self.semantico_widget)
+        
+        self.tree_semantico = QTreeWidget()
+        self.tree_semantico.setHeaderLabels(["Árbol de Sintaxis Abstracta Anotado (con Tipos y Valores)"])
+        semantico_layout.addWidget(self.tree_semantico)
+        
+        # Reemplazar la pestaña existente
+        for i in range(self.tabs.count()):
+            if self.tabs.tabText(i) == "Semántico":
+                self.tabs.removeTab(i)
+                break
+        
+        self.tabs.insertTab(2, self.semantico_widget, "Semántico")
+
+
+    def crear_pestana_hash_table(self):
+        """Crea la pestaña de tabla de símbolos (hash table)"""
+        # Se eliminó la importación local ya que se agregó a las importaciones principales
+        
+        self.hash_table_widget = QWidget()
+        hash_layout = QVBoxLayout(self.hash_table_widget)
+        
+        # Crear tabla
+        self.tabla_simbolos_widget = QTableWidget()
+        self.tabla_simbolos_widget.setColumnCount(5)
+        self.tabla_simbolos_widget.setHorizontalHeaderLabels(["Nombre", "Tipo", "Valor", "Ámbito", "Línea"])
+        
+        # Ajustar tamaño de columnas
+        header = self.tabla_simbolos_widget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        
+        hash_layout.addWidget(self.tabla_simbolos_widget)
+        
+        # Reemplazar la pestaña existente
+        for i in range(self.tabs.count()):
+            if self.tabs.tabText(i) == "Hash Table":
+                self.tabs.removeTab(i)
+                break
+        
+        self.tabs.insertTab(3, self.hash_table_widget, "Hash Table")
+
+
+    def crear_pestana_errores_semanticos(self):
+        """Crea la pestaña de errores semánticos"""
+        if not hasattr(self, 'error_semantico') or self.error_semantico is None:
+            self.error_semantico = QTextEdit()
+            self.error_semantico.setReadOnly(True)
+        
+        # Reemplazar la pestaña existente
+        for i in range(self.errors_tabs.count()):
+            if self.errors_tabs.tabText(i) == "Errores Semánticos":
+                self.errors_tabs.removeTab(i)
+                break
+        
+        self.errors_tabs.insertTab(2, self.error_semantico, "Errores Semánticos")
+
+
+    def generar_texto_ast_anotado(self, nodo, nivel=0):
+        """Genera representación en texto del AST anotado"""
+        if nodo is None:
+            return ""
+        
+        indentacion = "  " * nivel
+        resultado = f"{indentacion}{nodo.tipo}"
+        
+        if hasattr(nodo, 'valor') and nodo.valor:
+            resultado += f": {nodo.valor}"
+        
+        if hasattr(nodo, 'tipo_dato') and nodo.tipo_dato:
+            resultado += f" | Tipo: {nodo.tipo_dato}"
+        
+        if hasattr(nodo, 'valor_calculado') and nodo.valor_calculado is not None:
+            resultado += f" | Valor: {nodo.valor_calculado}"
+        
+        resultado += "\n"
+        
+        for hijo in nodo.hijos:
+            resultado += self.generar_texto_ast_anotado(hijo, nivel + 1)
+        
+        return resultado
+    
+    #################################FIN MÉTODOS SEMÁNTICO############################
+
     def close_file(self):
         self.setCentralWidget(QWidget())
         self.current_file = None
@@ -686,4 +955,3 @@ if __name__ == "__main__":
     window = CompilerIDE()
     window.show()
     sys.exit(app.exec())
-    
