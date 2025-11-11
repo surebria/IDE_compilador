@@ -474,38 +474,7 @@ class AnalizadorSintactico:
                 break
             
             self.avanzar()
-    
-    # def programa(self):
-    #     """programa → main { lista_declaracion }"""
-    #     print("Analizando programa...")
-    #     nodo_programa = NodoAST("programa")
 
-    #     # Consumir 'main'
-    #     if not self.consumir('main', "Se esperaba 'main' al inicio del programa"):
-    #         self.sincronizar_hasta(['{'])
-    #         return nodo_programa
-
-    #     # Crear nodo 'main'
-    #     nodo_main = NodoAST("main")
-
-    #     # Consumir '{'
-    #     if not self.consumir('{', "Se esperaba '{' después de 'main'"):
-    #         self.sincronizar_hasta(['int', 'float', 'bool', 'IDENTIFICADOR'])
-
-    #     # Analizar lista de declaraciones
-    #     lista_decl = self.lista_declaracion()
-    #     if lista_decl:
-    #         for hijo in lista_decl.hijos:
-    #             nodo_main.agregar_hijo(hijo)
-
-    #     # Consumir '}'
-    #     if not self.consumir('}', "Se esperaba '}' al final del programa"):
-    #         pass  # Error ya reportado
-
-    #     # Agregar el bloque main al programa
-    #     nodo_programa.agregar_hijo(nodo_main)
-
-    #     return nodo_programa
 
     def programa(self):
         """programa → main { lista_declaracion }"""
@@ -812,38 +781,6 @@ class AnalizadorSintactico:
         return nodo_izq
 
 
-    # def expresion_relacional(self):
-    #     """expresion_relacional → expresion_simple [ OPERADOR_RELACIONAL expresion_simple ]"""
-    #     print("Analizando expresión relacional...")
-        
-    #     expr_izq = self.expresion_simple()
-    #     if not expr_izq:
-    #         return None
-        
-    #     # Verificar si hay operador relacional (>, <, ==, !=, >=, <=)
-    #     if self.token_actual() and self.token_actual().tipo == 'OPERADOR_RELACIONAL':
-    #         nodo = NodoAST("expresion_relacional")
-    #         nodo.agregar_hijo(expr_izq)
-            
-    #         # Consumir operador relacional
-    #         op_token = self.token_actual()
-    #         self.avanzar()
-    #         nodo_op = NodoAST("rel_op", op_token.valor)
-    #         nodo.agregar_hijo(nodo_op)
-            
-    #         # Consumir segunda expresión simple
-    #         expr_der = self.expresion_simple()
-    #         if expr_der:
-    #             nodo.agregar_hijo(expr_der)
-    #         else:
-    #             self.agregar_error("Se esperaba expresión después del operador relacional",
-    #                             self.obtener_ultima_posicion_valida())
-    #             return None
-            
-    #         return nodo
-        
-    #     return expr_izq
-
     def expresion_relacional(self):
         """expresion_relacional → expresion_simple [ OPERADOR_RELACIONAL expresion_simple ]"""
         print("Analizando expresión relacional...")
@@ -871,46 +808,6 @@ class AnalizadorSintactico:
         return nodo_izq
 
 
-    # def expresion_simple(self):
-    #     """expresion_simple → expresion_simple suma_op termino | termino"""
-    #     print("Analizando expresión simple...")
-    
-    #     termino_izq = self.termino()
-    #     if not termino_izq:
-    #         return None
-    
-    #     # Si solo hay un término, devolverlo directamente
-    #     if not (self.token_actual() and self.token_actual().tipo == 'OPERADOR_ARITMETICO' and
-    #             self.token_actual().valor in ['+', '-']):
-    #         return termino_izq
-    
-    #     # Crear nodo para expresión con operadores
-    #     nodo = NodoAST("expresion_simple")
-    #     nodo.agregar_hijo(termino_izq)
-    
-    #     # Procesar operadores y términos adicionales
-    #     while (self.token_actual() and self.token_actual().tipo == 'OPERADOR_ARITMETICO' and
-    #         self.token_actual().valor in ['+', '-']):
-        
-    #         op_token = self.token_actual()
-    #         self.avanzar()  # Consumir el operador
-        
-    #         # Crear nodo para el operador
-    #         op_nodo = NodoAST("suma_op", op_token.valor)
-    #         nodo.agregar_hijo(op_nodo)
-        
-    #         # Procesar siguiente término
-    #         termino_der = self.termino()
-    #         if termino_der:
-    #             nodo.agregar_hijo(termino_der)
-    #         else:
-    #             self.agregar_error(
-    #                 f"Se esperaba un término después del operador '{op_token.valor}'",
-    #                 (op_token.linea, op_token.columna)
-    #             )
-    #             break
-    
-    #     return nodo
         
     def expresion_simple(self):
         """expresion_simple → termino { suma_op termino }"""
@@ -1310,33 +1207,6 @@ class AnalizadorSintactico:
         
         return nodo
 
-    # def incremento_decremento(self):
-    #     """Maneja operadores ++ y --"""
-    #     print("Analizando incremento/decremento...")
-    #     nodo = NodoAST("incremento_decremento")
-        
-    #     # Consumir identificador
-    #     token_id = self.consumir('IDENTIFICADOR')
-    #     if token_id:
-    #         nodo_id = NodoAST("identificador", token_id.valor)
-    #         nodo.agregar_hijo(nodo_id)
-        
-    #     # Consumir operador ++ o --
-    #     if self.coincidir('++'):
-    #         self.avanzar()
-    #         nodo_op = NodoAST("operador", "++")
-    #         nodo.agregar_hijo(nodo_op)
-    #     elif self.coincidir('--'):
-    #         self.avanzar()
-    #         nodo_op = NodoAST("operador", "--")
-    #         nodo.agregar_hijo(nodo_op)
-        
-    #     # Consumir ';'
-    #     if not self.consumir(';', "Se esperaba ';' después del operador"):
-    #         self.sincronizar_hasta(self.tokens_sync_sentencia)
-        
-    #     return nodo
-
     def incremento_decremento(self):
         """Maneja operadores ++ y -- como asignaciones implícitas"""
         print("Analizando incremento/decremento...")
@@ -1540,6 +1410,7 @@ def mapear_tipo_token(tipo_lexico):
     }
     
     return mapeo.get(tipo_lexico, tipo_lexico)
+
 
 def analizador_sintactico(archivo_tokens="tokens.txt"):
     """

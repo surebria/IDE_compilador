@@ -473,6 +473,7 @@ class AnalizadorSemantico:
             nodo_anotado.tipo_dato = None
             return
         
+
         # Inferir tipo resultado
         tipo_resultado = 'float' if (izq.tipo_dato == 'float' or der.tipo_dato == 'float') else 'int'
         nodo_anotado.tipo_dato = tipo_resultado
@@ -508,107 +509,220 @@ class AnalizadorSemantico:
             except:
                 nodo_anotado.valor_calculado = None
     
+    # def evaluar_operacion_relacional(self, nodo, nodo_anotado):
+    #     """Evalúa operaciones relacionales."""
+    #     if len(nodo.hijos) < 2:
+    #         nodo_anotado.tipo_dato = "bool"
+    #         nodo_anotado.valor_calculado = None
+    #         return
+        
+    #     izq = self.evaluar_expresion(nodo.hijos[0])
+    #     der = self.evaluar_expresion(nodo.hijos[1])
+        
+    #     nodo_anotado.agregar_hijo(izq)
+    #     nodo_anotado.agregar_hijo(der)
+    #     nodo_anotado.tipo_dato = "bool"
+        
+    #     if not izq.tipo_dato or not der.tipo_dato:
+    #         nodo_anotado.valor_calculado = None
+    #         return
+        
+    #     # Calcular valor
+    #     if izq.valor_calculado is not None and der.valor_calculado is not None:
+    #         try:
+    #             val_izq = float(izq.valor_calculado)
+    #             val_der = float(der.valor_calculado)
+                
+    #             if nodo.valor == '<':
+    #                 resultado = val_izq < val_der
+    #             elif nodo.valor == '>':
+    #                 resultado = val_izq > val_der
+    #             elif nodo.valor == '<=':
+    #                 resultado = val_izq <= val_der
+    #             elif nodo.valor == '>=':
+    #                 resultado = val_izq >= val_der
+    #             elif nodo.valor == '==':
+    #                 resultado = val_izq == val_der
+    #             elif nodo.valor == '!=':
+    #                 resultado = val_izq != val_der
+    #             else:
+    #                 resultado = None
+                
+    #             nodo_anotado.valor_calculado = resultado
+    #         except:
+    #             nodo_anotado.valor_calculado = None
+
     def evaluar_operacion_relacional(self, nodo, nodo_anotado):
-        """Evalúa operaciones relacionales."""
+        """Evalúa operaciones relacionales (<, >, <=, >=, ==, !=)."""
         if len(nodo.hijos) < 2:
             nodo_anotado.tipo_dato = "bool"
             nodo_anotado.valor_calculado = None
             return
-        
+
         izq = self.evaluar_expresion(nodo.hijos[0])
         der = self.evaluar_expresion(nodo.hijos[1])
-        
+
         nodo_anotado.agregar_hijo(izq)
         nodo_anotado.agregar_hijo(der)
+
         nodo_anotado.tipo_dato = "bool"
-        
+
+        # Si falta tipo, no calculamos
         if not izq.tipo_dato or not der.tipo_dato:
             nodo_anotado.valor_calculado = None
             return
-        
-        # Calcular valor
-        if izq.valor_calculado is not None and der.valor_calculado is not None:
-            try:
-                val_izq = float(izq.valor_calculado)
-                val_der = float(der.valor_calculado)
-                
-                if nodo.valor == '<':
-                    resultado = val_izq < val_der
-                elif nodo.valor == '>':
-                    resultado = val_izq > val_der
-                elif nodo.valor == '<=':
-                    resultado = val_izq <= val_der
-                elif nodo.valor == '>=':
-                    resultado = val_izq >= val_der
-                elif nodo.valor == '==':
-                    resultado = val_izq == val_der
-                elif nodo.valor == '!=':
-                    resultado = val_izq != val_der
-                else:
-                    resultado = None
-                
-                nodo_anotado.valor_calculado = resultado
-            except:
+
+        try:
+            val_izq = float(izq.valor_calculado)
+            val_der = float(der.valor_calculado)
+
+            if nodo.valor == '<':
+                nodo_anotado.valor_calculado = val_izq < val_der
+            elif nodo.valor == '>':
+                nodo_anotado.valor_calculado = val_izq > val_der
+            elif nodo.valor == '<=':
+                nodo_anotado.valor_calculado = val_izq <= val_der
+            elif nodo.valor == '>=':
+                nodo_anotado.valor_calculado = val_izq >= val_der
+            elif nodo.valor == '==':
+                nodo_anotado.valor_calculado = val_izq == val_der
+            elif nodo.valor == '!=':
+                nodo_anotado.valor_calculado = val_izq != val_der
+            else:
                 nodo_anotado.valor_calculado = None
+
+        except:
+            nodo_anotado.valor_calculado = None
+
     
+    # def evaluar_operacion_logica(self, nodo, nodo_anotado):
+    #     """Evalúa operaciones lógicas."""
+    #     if len(nodo.hijos) < 2:
+    #         nodo_anotado.tipo_dato = "bool"
+    #         nodo_anotado.valor_calculado = None
+    #         return
+        
+    #     izq = self.evaluar_expresion(nodo.hijos[0])
+    #     der = self.evaluar_expresion(nodo.hijos[1])
+        
+    #     nodo_anotado.agregar_hijo(izq)
+    #     nodo_anotado.agregar_hijo(der)
+    #     nodo_anotado.tipo_dato = "bool"
+        
+    #     if not izq.tipo_dato or not der.tipo_dato:
+    #         nodo_anotado.valor_calculado = None
+    #         return
+        
+    #     # Verificar que sean bool
+    #     if izq.tipo_dato != 'bool' or der.tipo_dato != 'bool':
+    #         self.report_error("TIPO_INCOMPATIBLE",
+    #                         "Operadores lógicos requieren operandos bool",
+    #                         getattr(nodo, 'linea', 0), getattr(nodo, 'columna', 0))
+    #         return
+        
+    #     # Calcular valor
+    #     if izq.valor_calculado is not None and der.valor_calculado is not None:
+    #         try:
+    #             val_izq = bool(izq.valor_calculado)
+    #             val_der = bool(der.valor_calculado)
+                
+    #             if nodo.valor == '&&':
+    #                 nodo_anotado.valor_calculado = val_izq and val_der
+    #             elif nodo.valor == '||':
+    #                 nodo_anotado.valor_calculado = val_izq or val_der
+    #         except:
+    #             nodo_anotado.valor_calculado = None
+
     def evaluar_operacion_logica(self, nodo, nodo_anotado):
-        """Evalúa operaciones lógicas."""
-        if len(nodo.hijos) < 2:
+        """Evalúa operaciones lógicas (AND, OR, NOT)."""
+        # NOT es unario
+        if nodo.valor == 'not':
+            hijo = self.evaluar_expresion(nodo.hijos[0])
+            nodo_anotado.agregar_hijo(hijo)
             nodo_anotado.tipo_dato = "bool"
-            nodo_anotado.valor_calculado = None
+            
+            if hijo.valor_calculado is not None:
+                nodo_anotado.valor_calculado = not hijo.valor_calculado
+            else:
+                nodo_anotado.valor_calculado = None
             return
-        
+
+        # AND / OR binarios
         izq = self.evaluar_expresion(nodo.hijos[0])
         der = self.evaluar_expresion(nodo.hijos[1])
-        
+
         nodo_anotado.agregar_hijo(izq)
         nodo_anotado.agregar_hijo(der)
+
         nodo_anotado.tipo_dato = "bool"
-        
-        if not izq.tipo_dato or not der.tipo_dato:
+
+        if izq.tipo_dato != "bool" or der.tipo_dato != "bool":
+            self.report_error("TIPO_INCOMPATIBLE",
+                            "Operación lógica requiere operandos booleanos",
+                            nodo.linea, nodo.columna)
             nodo_anotado.valor_calculado = None
             return
-        
-        # Verificar que sean bool
-        if izq.tipo_dato != 'bool' or der.tipo_dato != 'bool':
-            self.report_error("TIPO_INCOMPATIBLE",
-                            "Operadores lógicos requieren operandos bool",
-                            getattr(nodo, 'linea', 0), getattr(nodo, 'columna', 0))
-            return
-        
-        # Calcular valor
-        if izq.valor_calculado is not None and der.valor_calculado is not None:
-            try:
-                val_izq = bool(izq.valor_calculado)
-                val_der = bool(der.valor_calculado)
-                
-                if nodo.valor == '&&':
-                    nodo_anotado.valor_calculado = val_izq and val_der
-                elif nodo.valor == '||':
-                    nodo_anotado.valor_calculado = val_izq or val_der
-            except:
-                nodo_anotado.valor_calculado = None
+
+        if nodo.valor in ("and", "&&"):
+            nodo_anotado.valor_calculado = izq.valor_calculado and der.valor_calculado
+        elif nodo.valor in ("or", "||"):
+            nodo_anotado.valor_calculado = izq.valor_calculado or der.valor_calculado
+        else:
+            nodo_anotado.valor_calculado = None
+
+
     
+    # def procesar_seleccion(self, nodo, nodo_anotado):
+    #     """Procesa estructura if-then-else."""
+    #     for hijo in nodo.hijos:
+    #         hijo_anotado = self.anotar_nodo(hijo)
+    #         if hijo_anotado:
+    #             nodo_anotado.agregar_hijo(hijo_anotado)
+
     def procesar_seleccion(self, nodo, nodo_anotado):
-        """Procesa estructura if-then-else."""
-        for hijo in nodo.hijos:
-            hijo_anotado = self.anotar_nodo(hijo)
-            if hijo_anotado:
-                nodo_anotado.agregar_hijo(hijo_anotado)
+    # hijo[0] = condición
+        condicion = self.evaluar_expresion(nodo.hijos[0])
+        nodo_anotado.agregar_hijo(condicion)
+
+        # hijo[1] = bloque THEN
+        bloque_then = self.anotar_nodo(nodo.hijos[1])
+        nodo_anotado.agregar_hijo(bloque_then)
+
+        # hijo[2] = bloque ELSE (opcional)
+        if len(nodo.hijos) > 2:
+            bloque_else = self.anotar_nodo(nodo.hijos[2])
+            nodo_anotado.agregar_hijo(bloque_else)
+
+
+    
+    # def procesar_iteracion(self, nodo, nodo_anotado):
+    #     """Procesa estructura while."""
+    #     for hijo in nodo.hijos:
+    #         hijo_anotado = self.anotar_nodo(hijo)
+    #         if hijo_anotado:
+    #             nodo_anotado.agregar_hijo(hijo_anotado)
     
     def procesar_iteracion(self, nodo, nodo_anotado):
-        """Procesa estructura while."""
-        for hijo in nodo.hijos:
-            hijo_anotado = self.anotar_nodo(hijo)
-            if hijo_anotado:
-                nodo_anotado.agregar_hijo(hijo_anotado)
-    
+        # hijo[0] = condición WHILE
+        # hijo[1] = bloque
+
+        condicion = self.evaluar_expresion(nodo.hijos[0])
+        nodo_anotado.agregar_hijo(condicion)
+
+        bloque = self.anotar_nodo(nodo.hijos[1])
+        nodo_anotado.agregar_hijo(bloque)
+
+
     def procesar_repeticion(self, nodo, nodo_anotado):
-        """Procesa estructura do-while/until."""
-        for hijo in nodo.hijos:
-            hijo_anotado = self.anotar_nodo(hijo)
-            if hijo_anotado:
-                nodo_anotado.agregar_hijo(hijo_anotado)
+    # hijo[0] = bloque
+    # hijo[1] = condición UNTIL
+
+        bloque = self.anotar_nodo(nodo.hijos[0])
+        nodo_anotado.agregar_hijo(bloque)
+
+        condicion = self.evaluar_expresion(nodo.hijos[1])
+        nodo_anotado.agregar_hijo(condicion)
+
     
     def procesar_entrada(self, nodo, nodo_anotado):
         """Procesa sentencia cin."""

@@ -74,9 +74,9 @@ programa
     asignacion: y | Tipo: int | Valor: 14.54
       numero: 14.54 | Tipo: float | Valor: 14.54
     seleccion
-      rel_op: >
-        numero: 2
-        numero: 3
+      rel_op: > | Tipo: bool | Valor: False
+        numero: 2 | Tipo: int | Valor: 2
+        numero: 3 | Tipo: int | Valor: 3
       lista_sentencias
         asignacion: y | Tipo: int | Valor: 64.0
           suma_op: + | Tipo: float | Valor: 64.0
@@ -85,11 +85,11 @@ programa
       else
         lista_sentencias
           seleccion
-            log_op: &&
-              rel_op: >
-                numero: 4
-                numero: 2
-              bool: true
+            log_op: && | Tipo: bool | Valor: True
+              rel_op: > | Tipo: bool | Valor: True
+                numero: 4 | Tipo: int | Valor: 4
+                numero: 2 | Tipo: int | Valor: 2
+              bool: true | Tipo: bool | Valor: True
             lista_sentencias
               asignacion: b | Tipo: float | Valor: 3.2
                 numero: 3.2 | Tipo: float | Valor: 3.2
@@ -124,10 +124,10 @@ programa
               numero: 2 | Tipo: int | Valor: 2
             numero: 1 | Tipo: int | Valor: 1
         iteracion
-          condicion
-            rel_op: >
-              id: x
-              numero: 7
+          condicion | Tipo: bool | Valor: False
+            rel_op: > | Tipo: bool | Valor: False
+              id: x | Tipo: int | Valor: 7
+              numero: 7 | Tipo: int | Valor: 7
           lista_sentencias
             asignacion: x | Tipo: int | Valor: 6
               suma_op: + | Tipo: int | Valor: 6
@@ -142,15 +142,15 @@ programa
             sent_in
               id: x | Tipo: int
             asignacion: mas | Tipo: desconocido
-      condicion: until
-        rel_op: ==
-          id: y
-          numero: 5
+      condicion: until | Tipo: bool | Valor: False
+        rel_op: == | Tipo: bool | Valor: False
+          id: y | Tipo: int | Valor: 133
+          numero: 5 | Tipo: int | Valor: 5
     iteracion
-      condicion
-        rel_op: ==
-          id: y
-          numero: 0
+      condicion | Tipo: bool | Valor: False
+        rel_op: == | Tipo: bool | Valor: False
+          id: y | Tipo: int | Valor: 133
+          numero: 0 | Tipo: int | Valor: 0
       lista_sentencias
         sent_in
           id: mas | Tipo: desconocido
