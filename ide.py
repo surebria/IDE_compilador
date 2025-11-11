@@ -735,16 +735,14 @@ class CompilerIDE(QMainWindow):
                     # Tipo
                     self.tabla_simbolos_widget.setItem(i, 1, QTableWidgetItem(simbolo.tipo or ""))
                     
-                    # Valor
-                    valor_str = str(simbolo.valor) if simbolo.valor is not None else "Sin inicializar"
-                    self.tabla_simbolos_widget.setItem(i, 2, QTableWidgetItem(valor_str))
+                    
                     
                     # Ámbito
-                    self.tabla_simbolos_widget.setItem(i, 3, QTableWidgetItem(simbolo.ambito))
+                    self.tabla_simbolos_widget.setItem(i, 2, QTableWidgetItem(simbolo.ambito))
                     
                     # Línea
                     linea_columna_str = f"{simbolo.linea}:{simbolo.columna}"
-                    self.tabla_simbolos_widget.setItem(i, 4, QTableWidgetItem(linea_columna_str))
+                    self.tabla_simbolos_widget.setItem(i, 3, QTableWidgetItem(linea_columna_str))
                     
             # ===== MOSTRAR ERRORES SEMÁNTICOS =====
             if errores_sem:
@@ -836,16 +834,15 @@ class CompilerIDE(QMainWindow):
         
         # Crear tabla
         self.tabla_simbolos_widget = QTableWidget()
-        self.tabla_simbolos_widget.setColumnCount(5)
-        self.tabla_simbolos_widget.setHorizontalHeaderLabels(["Nombre", "Tipo", "Valor", "Ámbito", "Línea"])
+        self.tabla_simbolos_widget.setColumnCount(4)
+        self.tabla_simbolos_widget.setHorizontalHeaderLabels(["Nombre", "Tipo", "Ámbito", "Línea"])
         
         # Ajustar tamaño de columnas
         header = self.tabla_simbolos_widget.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         
         hash_layout.addWidget(self.tabla_simbolos_widget)
         
