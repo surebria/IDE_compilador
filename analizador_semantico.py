@@ -317,6 +317,44 @@ class AnalizadorSemantico:
         
         nodo_anotado.tipo_dato = tipo_dato
     
+    # def procesar_asignacion(self, nodo, nodo_anotado):
+    #     """Procesa asignación con verificación de tipos."""
+    #     nombre_var = nodo.valor
+    #     linea = getattr(nodo, 'linea', 0) or 0
+    #     columna = getattr(nodo, 'columna', 0) or 0
+        
+    #     # Verificar que la variable esté declarada
+    #     simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
+        
+    #     if not simbolo:
+    #         self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
+    #         nodo_anotado.tipo_dato = "desconocido"
+    #         nodo_anotado.valor_calculado = None
+    #         return
+        
+    #     # Evaluar expresión del lado derecho
+    #     if nodo.hijos:
+    #         expr_anotada = self.evaluar_expresion(nodo.hijos[0])
+    #         nodo_anotado.agregar_hijo(expr_anotada)
+            
+    #         # Verificar compatibilidad de tipos
+    #         if expr_anotada.tipo_dato and simbolo.tipo:
+    #             es_compatible, mensaje = self.check_type_compatibility(
+    #                 simbolo.tipo, expr_anotada.tipo_dato, linea, columna
+    #             )
+    #             if not es_compatible:
+    #                 self.report_error("TIPO_INCOMPATIBLE", mensaje, linea, columna)
+            
+    #         # Actualizar valor en tabla de símbolos
+    #         if expr_anotada.valor_calculado is not None:
+    #             self.tabla_simbolos.actualizar_valor(nombre_var, expr_anotada.valor_calculado)
+            
+    #         nodo_anotado.tipo_dato = simbolo.tipo
+    #         nodo_anotado.valor_calculado = expr_anotada.valor_calculado
+    #     else:
+    #         nodo_anotado.tipo_dato = simbolo.tipo
+    #         nodo_anotado.valor_calculado = None
+
     def procesar_asignacion(self, nodo, nodo_anotado):
         """Procesa asignación con verificación de tipos."""
         nombre_var = nodo.valor
@@ -328,24 +366,42 @@ class AnalizadorSemantico:
         
         if not simbolo:
             self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
-            nodo_anotado.tipo_dato = "desconocido"
-            nodo_anotado.valor_calculado = None
+            # nodo_anotado.tipo_dato = "desconocido"
+            # nodo_anotado.valor_calculado = None
+            nodo_anotado.tipo_dato = "error"
+            nodo_anotado.valor_calculado = "error"
             return
+        
         
         # Evaluar expresión del lado derecho
         if nodo.hijos:
             expr_anotada = self.evaluar_expresion(nodo.hijos[0])
             nodo_anotado.agregar_hijo(expr_anotada)
-            
-            # Verificar compatibilidad de tipos
+
+            if simbolo.tipo == "int" and expr_anotada.tipo_dato == "float":
+                # Reportar error
+                self.report_error(
+                    "TIPO_INCOMPATIBLE",
+                    f"No puedes asignar un float ({expr_anotada.valor_calculado}) a una variable int",
+                    linea, columna
+                )
+
+                nodo_anotado.tipo_dato = "int"
+                nodo_anotado.valor_calculado = "error"
+
+                return nodo_anotado
+        
             if expr_anotada.tipo_dato and simbolo.tipo:
                 es_compatible, mensaje = self.check_type_compatibility(
                     simbolo.tipo, expr_anotada.tipo_dato, linea, columna
                 )
                 if not es_compatible:
                     self.report_error("TIPO_INCOMPATIBLE", mensaje, linea, columna)
-            
-            # Actualizar valor en tabla de símbolos
+                
+                    nodo_anotado.tipo_dato = simbolo.tipo
+                    nodo_anotado.valor_calculado = "error"
+                    return nodo_anotado
+        
             if expr_anotada.valor_calculado is not None:
                 self.tabla_simbolos.actualizar_valor(nombre_var, expr_anotada.valor_calculado)
             
@@ -354,13 +410,14 @@ class AnalizadorSemantico:
         else:
             nodo_anotado.tipo_dato = simbolo.tipo
             nodo_anotado.valor_calculado = None
+
     
     def evaluar_expresion(self, nodo):
         """Evalúa una expresión y retorna nodo anotado con tipo y valor."""
         if nodo is None:
             nodo_error = NodoAnotado("error", None)
-            nodo_error.tipo_dato = "desconocido"
-            nodo_error.valor_calculado = None
+            nodo_error.tipo_dato = "error"
+            nodo_error.valor_calculado = "error"
             return nodo_error
         
         nodo_anotado = NodoAnotado(nodo.tipo, nodo.valor)
@@ -392,8 +449,10 @@ class AnalizadorSemantico:
             else:
                 self.report_error("VARIABLE_NO_DECLARADA", error_msg, 
                                 getattr(nodo, 'linea', 0), getattr(nodo, 'columna', 0))
-                nodo_anotado.tipo_dato = "desconocido"
-                nodo_anotado.valor_calculado = None
+                # nodo_anotado.tipo_dato = "desconocido"
+                # nodo_anotado.valor_calculado = None
+                nodo_anotado.tipo_dato = "error"
+                nodo_anotado.valor_calculado = "error"
         
         # Booleano
         elif nodo.tipo == "bool":
@@ -450,8 +509,10 @@ class AnalizadorSemantico:
     def evaluar_operacion_aritmetica(self, nodo, nodo_anotado):
         """Evalúa operaciones aritméticas."""
         if len(nodo.hijos) < 2:
-            nodo_anotado.tipo_dato = "desconocido"
-            nodo_anotado.valor_calculado = None
+            # nodo_anotado.tipo_dato = "desconocido"
+            # nodo_anotado.valor_calculado = None
+            nodo_anotado.tipo_dato = "error"
+            nodo_anotado.valor_calculado = "error"
             return
         
         izq = self.evaluar_expresion(nodo.hijos[0])
@@ -473,6 +534,11 @@ class AnalizadorSemantico:
             nodo_anotado.tipo_dato = None
             return
         
+        # Si algún hijo ya trae un error previo:
+        if izq.valor_calculado == "error" or der.valor_calculado == "error":
+            nodo_anotado.tipo_dato = "error"
+            nodo_anotado.valor_calculado = "error"
+            return nodo_anotado
 
         # Inferir tipo resultado
         tipo_resultado = 'float' if (izq.tipo_dato == 'float' or der.tipo_dato == 'float') else 'int'
@@ -751,7 +817,7 @@ class AnalizadorSemantico:
                     self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
                 
                 id_anotado = NodoAnotado("id", nombre_var)
-                id_anotado.tipo_dato = simbolo.tipo if simbolo else "desconocido"
+                id_anotado.tipo_dato = simbolo.tipo if simbolo else "error"
                 id_anotado.linea = linea
                 id_anotado.columna = columna
                 nodo_anotado.agregar_hijo(id_anotado)
@@ -773,14 +839,20 @@ class AnalizadorSemantico:
         if not simbolo:
             self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
         else:
-            # 🚨 ¡NUEVO! Registrar la ubicación de USO (línea/columna actual)
             simbolo.agregar_ubicacion(linea, columna)
             
         id_anotado = NodoAnotado("id", nombre_var)
-        id_anotado.tipo_dato = simbolo.tipo if simbolo else "desconocido"
+        id_anotado.tipo_dato = simbolo.tipo if simbolo else "error"
+        id_anotado.valor_calculado = "error"
+
         id_anotado.linea = linea
-        id_anotada.columna = columna
+        id_anotado.columna = columna
         nodo_anotado.agregar_hijo(id_anotado)
+
+        # También propagar al nodo padre si lo que estás evaluando ES un ID
+        nodo_anotado.tipo_dato = id_anotado.tipo_dato
+        nodo_anotado.valor_calculado = "error"
+
     
     def procesar_salida(self, nodo, nodo_anotado):
         """Procesa sentencia cout."""

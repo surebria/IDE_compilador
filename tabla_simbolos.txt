@@ -3,7 +3,7 @@ TABLA DE SÍMBOLOS
 Nombre          Tipo       Valor           Ámbito     Línea     
 --------------------------------------------------------------------------------
 x               int        6               global     2         
-y               int        133             global     2         
+y               int        1               global     2         
 z               int        64              global     2         
 a               float      1               global     3         
 b               float      5.0             global     3         
