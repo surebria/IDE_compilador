@@ -762,15 +762,31 @@ class CompilerIDE(QMainWindow):
                     f.write(self.generar_texto_ast_anotado(ast_anotado))
                 
                 # Guardar tabla de símbolos
+                # Guardar tabla de símbolos
                 with open("tabla_simbolos.txt", "w", encoding="utf-8") as f:
                     f.write("TABLA DE SÍMBOLOS\n")
-                    f.write("="*80 + "\n")
-                    f.write(f"{'Nombre':<15} {'Tipo':<10} {'Valor':<15} {'Ámbito':<10} {'Línea':<10}\n")
-                    f.write("-"*80 + "\n")
+                    f.write("="*100 + "\n")
+                    f.write(f"{'SCOPE':<10} {'LVL':<5} {'NAME':<15} {'TYPE':<10} {'OFFSET':<10} {'COUNT':<7} {'LINES':<30}\n")
+                    f.write("-"*100 + "\n")
+
+                    offset_counter = 0  # 🚀 OFFSET desde 0
+
                     for simbolo in simbolos:
-                        valor_str = str(simbolo.valor) if simbolo.valor is not None else "N/A"
-                        f.write(f"{simbolo.nombre:<15} {simbolo.tipo:<10} {valor_str:<15} {simbolo.ambito:<10} {simbolo.linea:<10}\n")
-                
+                        scope = "block"
+                        lvl = 1
+                        name = simbolo.nombre
+                        tipo = simbolo.tipo
+                        offset = offset_counter
+                        count = len(simbolo.ubicaciones)
+                        lines = ", ".join([str(l) for l, c in simbolo.ubicaciones])
+
+                        f.write(
+                            f"{scope:<10} {lvl:<5} {name:<15} {tipo:<10} "
+                            f"{offset:<10} {count:<7} {lines:<30}\n"
+                        )
+
+                        offset_counter += 1
+
                 # Guardar errores semánticos
                 with open("errores_semanticos.txt", "w", encoding="utf-8") as f:
                     if errores_sem:
@@ -795,9 +811,6 @@ class CompilerIDE(QMainWindow):
             else:
                 self.status_label.setText("Análisis semántico completado exitosamente")
             
-            print(f"Análisis semántico completado:")
-            print(f"- Símbolos en tabla: {len(simbolos)}")
-            print(f"- Errores semánticos: {len(errores_sem)}")
             
         except Exception as e:
             error_msg = f"Error durante el análisis semántico: {str(e)}"

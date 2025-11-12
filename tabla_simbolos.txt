@@ -1,10 +1,10 @@
 TABLA DE SÍMBOLOS
-================================================================================
-Nombre          Tipo       Valor           Ámbito     Línea     
---------------------------------------------------------------------------------
-x               int        6               global     2         
-y               int        1               global     2         
-z               int        64              global     2         
-a               float      1               global     3         
-b               float      5.0             global     3         
-c               float      1               global     3         
+====================================================================================================
+SCOPE      LVL   NAME            TYPE       OFFSET     COUNT   LINES                         
+----------------------------------------------------------------------------------------------------
+block      1     x               int        0          13      2, 5, 6, 0, 11, 0, 27, 0, None, 31, 0, 32, None
+block      1     y               int        1          19      2, 7, 0, None, 9, None, 0, 12, 0, 14, 16, 23, None, 0, 29, None, 0, None, None
+block      1     z               int        2          5       2, 8, 0, 13, 0                
+block      1     a               float      3          7       3, 10, 0, None, 0, None, 0    
+block      1     b               float      4          5       3, 19, 0, 21, 0               
+block      1     c               float      5          4       3, 0, None, 0                 
