@@ -1392,11 +1392,10 @@ class AnalizadorSintactico:
             
             self.ast = self.programa()
 
-            print("\n=== ÁRBOL SINTÁCTICO CON POSICIONES ===")
-            if self.ast:
-                self.ast.debug()
+            # print("\n=== ÁRBOL SINTÁCTICO CON POSICIONES ===")
+            # if self.ast:
+            #     self.ast.debug()
             
-            # Verificar que no sobren tokens
             if self.token_actual():
                 token = self.token_actual()
                 self.agregar_error(

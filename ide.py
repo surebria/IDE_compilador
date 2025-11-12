@@ -730,10 +730,10 @@ class CompilerIDE(QMainWindow):
                 self.tabla_simbolos_widget.setRowCount(len(simbolos))
                 
                 # ===== IMPRIMIR TABLA DE SÍMBOLOS EN CONSOLA =====
-                print("TABLA DE SÍMBOLOS")
-                print("=" * 100)
-                print(f"{'NAME':<15} {'TYPE':<10} {'OFFSET':<10} {'COUNT':<7} {'LINES':<30}")
-                print("-" * 100)
+                # print("TABLA DE SÍMBOLOS")
+                # print("=" * 100)
+                # print(f"{'NAME':<15} {'TYPE':<10} {'OFFSET':<10} {'COUNT':<7} {'LINES':<30}")
+                # print("-" * 100)
                 
                 offset_counter = 0  # 🚀 OFFSET desde 0
 
