@@ -661,7 +661,7 @@ class CompilerIDE(QMainWindow):
                 self.status_label.setText("No se puede ejecutar análisis semántico sin AST válido")
                 # Mostrar errores sintácticos si hay
                 if errores_sint:
-                    errores_texto = "\n".join(errores_sint)
+                    errores_texto = "\n".join(str(e) for e in errores_sint)
                     self.error_sintactico.setPlainText(errores_texto)
                     self.errors_tabs.setCurrentWidget(self.error_sintactico)
                 return
@@ -723,27 +723,52 @@ class CompilerIDE(QMainWindow):
             
             # ===== MOSTRAR TABLA DE SÍMBOLOS EN PESTAÑA HASH TABLE =====
             self.tabla_simbolos_widget.setRowCount(0)
-            
+
             simbolos = tabla_simbolos.listar_simbolos()
+
             if simbolos:
+                self.tabla_simbolos_widget.setColumnCount(7)
+                self.tabla_simbolos_widget.setHorizontalHeaderLabels([
+                    "Scope", "Lvl", "Name", "Type", "Offset", "Count", "Lines"
+                ])
                 self.tabla_simbolos_widget.setRowCount(len(simbolos))
                 
+                # ===== IMPRIMIR TABLA DE SÍMBOLOS EN CONSOLA =====
+                print("TABLA DE SÍMBOLOS")
+                print("=" * 100)
+                print(f"{'SCOPE':<10} {'LVL':<5} {'NAME':<15} {'TYPE':<10} {'OFFSET':<10} {'COUNT':<7} {'LINES':<30}")
+                print("-" * 100)
+                
+                offset_counter = 0  # 🚀 OFFSET desde 0
+
                 for i, simbolo in enumerate(simbolos):
-                    # Nombre
-                    self.tabla_simbolos_widget.setItem(i, 0, QTableWidgetItem(simbolo.nombre))
-                    
-                    # Tipo
-                    self.tabla_simbolos_widget.setItem(i, 1, QTableWidgetItem(simbolo.tipo or ""))
-                    
-                    
-                    
-                    # Ámbito
-                    self.tabla_simbolos_widget.setItem(i, 2, QTableWidgetItem(simbolo.ambito))
-                    
-                    # Línea
-                    linea_columna_str = f"{simbolo.linea}:{simbolo.columna}"
-                    self.tabla_simbolos_widget.setItem(i, 3, QTableWidgetItem(linea_columna_str))
-                    
+                    scope = "block"
+                    lvl = 1
+                    name = simbolo.nombre
+                    tipo = simbolo.tipo or ""
+                    offset = offset_counter
+                    count = len(simbolo.ubicaciones)
+                    lines = ", ".join([str(l) for l, c in simbolo.ubicaciones])
+
+                    # ===== LLENAR TABLA EN PESTAÑA =====
+                    self.tabla_simbolos_widget.setItem(i, 0, QTableWidgetItem(scope))
+                    self.tabla_simbolos_widget.setItem(i, 1, QTableWidgetItem(str(lvl)))
+                    self.tabla_simbolos_widget.setItem(i, 2, QTableWidgetItem(name))
+                    self.tabla_simbolos_widget.setItem(i, 3, QTableWidgetItem(tipo))
+                    self.tabla_simbolos_widget.setItem(i, 4, QTableWidgetItem(str(offset)))
+                    self.tabla_simbolos_widget.setItem(i, 5, QTableWidgetItem(str(count)))
+                    self.tabla_simbolos_widget.setItem(i, 6, QTableWidgetItem(lines))
+
+                    # ===== IMPRIMIR FILA EN CONSOLA =====
+                    print(f"{scope:<10} {lvl:<5} {name:<15} {tipo:<10} {offset:<10} {count:<7} {lines:<30}")
+                    offset_counter += 1
+
+                print("=" * 100)
+                print("Fin de la tabla de símbolos\n", flush=True)
+
+            else:
+                print("No se encontraron símbolos en la tabla.\n", flush=True)
+                                
             # ===== MOSTRAR ERRORES SEMÁNTICOS =====
             if errores_sem:
                 errores_texto = ""
@@ -847,18 +872,23 @@ class CompilerIDE(QMainWindow):
         
         # Crear tabla
         self.tabla_simbolos_widget = QTableWidget()
-        self.tabla_simbolos_widget.setColumnCount(4)
-        self.tabla_simbolos_widget.setHorizontalHeaderLabels(["Nombre", "Tipo", "Ámbito", "Línea"])
-        
+        self.tabla_simbolos_widget.setColumnCount(7)
+        self.tabla_simbolos_widget.setHorizontalHeaderLabels([
+            "Scope", "Lvl", "Name", "Type", "Offset", "Count", "Lines"
+        ])
+
         # Ajustar tamaño de columnas
         header = self.tabla_simbolos_widget.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Scope
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)  # Lvl
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Name
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # Type
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # Offset
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # Count
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)            # Lines
+
         hash_layout.addWidget(self.tabla_simbolos_widget)
-        
+
         # Reemplazar la pestaña existente
         for i in range(self.tabs.count()):
             if self.tabs.tabText(i) == "Hash Table":

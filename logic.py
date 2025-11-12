@@ -326,9 +326,21 @@ class NodoAST:
         self.linea = linea
         self.columna = columna
         return self
+
+    def debug(self, nivel=0):
+        sangria = "  " * nivel
+        print(f"{sangria}- {self.tipo} (valor={self.valor}, linea={self.linea}, columna={self.columna})")
+        for hijo in self.hijos:
+            hijo.debug(nivel + 1)
     
     def __str__(self):
         return f"NodoAST({self.tipo}, {self.valor})"
+    
+class NodoAnotado(NodoAST):
+    def __init__(self, tipo, valor=None):
+        super().__init__(tipo, valor)
+        self.tipo_dato = None  # tipo semántico, ej. int, float, bool
+        self.valor_evaluado = None  # resultado de la evaluación si aplica
 
 class AnalizadorSintactico:
     """Analizador sintáctico descendente recursivo con mejor manejo de errores"""
@@ -479,21 +491,29 @@ class AnalizadorSintactico:
     def programa(self):
         """programa → main { lista_declaracion }"""
         print("Analizando programa...")
+
+        # Crear nodo raíz del programa
+        token_inicio = self.token_actual()
         nodo_programa = NodoAST("programa")
+        if token_inicio:
+            nodo_programa.set_posicion(token_inicio.linea, token_inicio.columna)
 
         # Consumir 'main'
         if not self.consumir('main', "Se esperaba 'main' al inicio del programa"):
             self.sincronizar_hasta(['{'])
             return nodo_programa
 
-        # Crear nodo 'main'
+        # Obtener el token real de 'main' (ya fue consumido)
+        token_main = self.obtener_token_anterior()
         nodo_main = NodoAST("main")
+        if token_main:
+            nodo_main.set_posicion(token_main.linea, token_main.columna)
 
         # Consumir '{'
         if not self.consumir('{', "Se esperaba '{' después de 'main'"):
             self.sincronizar_hasta(['int', 'float', 'bool', 'IDENTIFICADOR'])
 
-        # Analizar lista de declaraciones
+        # Analizar lista de declaraciones dentro de main
         lista_decl = self.lista_declaracion()
         if lista_decl:
             for hijo in lista_decl.hijos:
@@ -503,10 +523,11 @@ class AnalizadorSintactico:
         if not self.consumir('}', "Se esperaba '}' al final del programa"):
             pass  # Error ya reportado
 
-        # Agregar el bloque main al programa
+        # Agregar el bloque main al nodo programa
         nodo_programa.agregar_hijo(nodo_main)
 
         return nodo_programa
+
 
     def lista_declaracion(self):
         """lista_declaracion → { declaracion_variable } lista_sentencias"""
@@ -543,157 +564,188 @@ class AnalizadorSintactico:
     def declaracion_variable(self):
         """declaracion_variable → tipo identificador ;"""
         print("Analizando declaración de variable...")
-        
-        # Capturar el token tipo
+
+        # Capturar token de tipo (int, float, bool)
         token_tipo = self.token_actual()
-        if not self.coincidir('int') and not self.coincidir('float') and not self.coincidir('bool'):
+        if not (self.coincidir('int') or self.coincidir('float') or self.coincidir('bool')):
             return None
-        
+
+        # Crear nodo principal de la declaración
         nodo = NodoAST("declaracion_variable")
-        # Establecer posición del nodo
         if token_tipo:
             nodo.set_posicion(token_tipo.linea, token_tipo.columna)
-        
-        self.avanzar()  # Consumir el tipo
+
+        # Consumir el tipo
+        self.avanzar()
+
+        # Nodo hijo: tipo
         nodo_tipo = NodoAST("tipo", token_tipo.valor)
         if token_tipo:
             nodo_tipo.set_posicion(token_tipo.linea, token_tipo.columna)
         nodo.agregar_hijo(nodo_tipo)
-        
-        # Procesar identificadores según gramática
+
+        # Procesar el/los identificadores
         nodo_identificador = self.identificador()
         if nodo_identificador:
+            # Si el identificador no tiene línea (caso raro), heredarla del tipo
+            if nodo_identificador.linea is None:
+                nodo_identificador.set_posicion(token_tipo.linea, token_tipo.columna)
             nodo.agregar_hijo(nodo_identificador)
-        
-        # Consumir punto y coma
+
+        # Consumir ';'
         if not self.consumir(';', "Se esperaba ';' después de la declaración"):
             self.sincronizar_hasta(self.tokens_sync_declaracion)
-        
+
         return nodo
+
         
     def identificador(self):
         """identificador → id | identificador , id"""
         print("Analizando identificador...")
+
         nodo = NodoAST("identificador")
-        
-        # Primer identificador
+
         token_id = self.token_actual()
         if not self.coincidir('IDENTIFICADOR'):
             return None
-        
-        # Establecer posición
+
         if token_id:
             nodo.set_posicion(token_id.linea, token_id.columna)
-        
+
         self.avanzar()
         nodo_id = NodoAST("id", token_id.valor)
-        # Establecer posición del nodo hijo
         if token_id:
             nodo_id.set_posicion(token_id.linea, token_id.columna)
         nodo.agregar_hijo(nodo_id)
-        
-        # Identificadores adicionales separados por comas
+
+        # Identificadores separados por comas
         while self.coincidir(','):
-            self.avanzar()  # Consumir la coma
+            self.avanzar()  # consumir coma
             token_id = self.token_actual()
             if not self.coincidir('IDENTIFICADOR'):
                 break
             self.avanzar()
-            nodo_id = NodoAST("id", token_id.valor)
-            # Establecer posición
-            if token_id:
-                nodo_id.set_posicion(token_id.linea, token_id.columna)
-            nodo.agregar_hijo(nodo_id)
-        
+
+            nuevo_id = NodoAST("id", token_id.valor)
+            nuevo_id.set_posicion(token_id.linea, token_id.columna)
+            nodo.agregar_hijo(nuevo_id)
+
         return nodo
         
     def lista_sentencias(self):
         """lista_sentencias → lista_sentencias sentencia | ε"""
         print("Analizando lista de sentencias...")
-        nodo = NodoAST("lista_sentencias")
+        nodo_lista = NodoAnotado("lista_sentencias")
 
-        while (self.token_actual() and
-            not self.coincidir('}') and not self.coincidir('end') and
-            not self.coincidir('else') and not self.coincidir('until')):
-
+        while (
+            self.token_actual()
+            and not self.coincidir('}')
+            and not self.coincidir('end')
+            and not self.coincidir('else')
+            and not self.coincidir('until')
+        ):
             # VALIDACIÓN: Si encontramos un ';' al inicio, es un error
             if self.token_actual().valor == ';':
-                self.agregar_error(f"';' inesperado. No se esperaba punto y coma aquí",
-                                (self.token_actual().linea, self.token_actual().columna))
-                self.avanzar()  # Saltar el ';' problemático
+                self.agregar_error(
+                    "';' inesperado. No se esperaba punto y coma aquí",
+                    (self.token_actual().linea, self.token_actual().columna)
+                )
+                self.avanzar()
                 continue
 
-            # Guardar posición antes de intentar procesar sentencia
+            # Guardar posición antes de procesar la sentencia
             posicion_antes = self.posicion
             sent = self.sentencia()
-            
+
             if sent:
-                nodo.agregar_hijo(sent)
+                # Asegurar que sea un NodoAnotado
+                if not isinstance(sent, NodoAnotado):
+                    sent_anotado = NodoAnotado(sent.tipo, getattr(sent, "valor", None))
+                    sent_anotado.linea = getattr(sent, "linea", 0)
+                    sent_anotado.columna = getattr(sent, "columna", 0)
+                    for hijo in getattr(sent, "hijos", []):
+                        sent_anotado.agregar_hijo(hijo)
+                    nodo_lista.agregar_hijo(sent_anotado)
+                else:
+                    nodo_lista.agregar_hijo(sent)
             else:
-                # Si no se pudo procesar la sentencia
+                # Manejo de errores o tokens no consumidos
                 if self.token_actual():
-                    # Si la posición no cambió, significa que sentencia() no consumió el token
                     if self.posicion == posicion_antes:
                         print(f"Token no procesado por sentencia(): {self.token_actual()}")
-                        # Sincronizar hasta encontrar un punto de recuperación
                         self.sincronizar_hasta(self.tokens_sync_sentencia)
-                        
-                        # Si seguimos en la misma posición después de sincronizar, salir
                         if self.posicion == posicion_antes:
                             print("No se pudo sincronizar, saltando token problemático")
                             self.avanzar()
-                            # Verificar si ahora podemos continuar
-                            if (self.token_actual() and 
-                                (self.coincidir('}') or self.coincidir('end') or 
-                                self.coincidir('else') or self.coincidir('until'))):
+                            if (
+                                self.token_actual()
+                                and (
+                                    self.coincidir('}')
+                                    or self.coincidir('end')
+                                    or self.coincidir('else')
+                                    or self.coincidir('until')
+                                )
+                            ):
                                 break
                     else:
-                        # sentencia() consumió algunos tokens pero falló, continuar
                         print("Sentencia parcialmente procesada, continuando...")
                 else:
                     break
 
-        return nodo if nodo.hijos else None
+        return nodo_lista if nodo_lista.hijos else None
 
     def sentencia(self):
         """sentencia → seleccion | iteracion | repeticion | sent_in | sent_out | asignacion"""
         print("Analizando sentencia...")
         token = self.token_actual()
-        
+
         if not token:
             return None
-            
+
+        # Selección (if)
         if self.coincidir('if'):
             return self.seleccion()
+
+        # Iteración (while)
         elif self.coincidir('while'):
             return self.iteracion()
+
+        # Repetición (do ... until)
         elif self.coincidir('do'):
             return self.repeticion()
+
+        # Entrada (cin)
         elif self.coincidir('cin'):
             return self.sent_in()
+
+        # Salida (cout)
         elif self.coincidir('cout'):
             return self.sent_out()
+
+        # Asignación o incremento/decremento
         elif self.coincidir('IDENTIFICADOR'):
             siguiente = self.token_siguiente()
+
             if siguiente and siguiente.valor == '=':
                 return self.asignacion()
-            elif siguiente and (siguiente.valor == '++' or siguiente.valor == '--'):
+
+            elif siguiente and siguiente.valor in ('++', '--'):
                 return self.incremento_decremento()
+
             else:
-                # Error: identificador sin asignación válida
                 self.agregar_error(
                     f"Se esperaba '=' después del identificador '{token.valor}'",
                     (token.linea, token.columna)
                 )
-                self.avanzar()  # Saltar el token problemático
+                self.avanzar()
                 return None
+
+        # Token no reconocido como sentencia
         else:
-            # CAMBIO CRÍTICO: Reportar error específico para token no reconocido
             self.agregar_error(
                 f"Token inesperado '{token.valor}' ({token.tipo}). Se esperaba una sentencia válida",
                 (token.linea, token.columna)
             )
-            # NO avanzar aquí, dejar que lista_sentencias maneje la sincronización
             return None
 
 
@@ -734,24 +786,39 @@ class AnalizadorSintactico:
     def sent_expresion(self):
         """sent_expresion → expresion ; | ;"""
         print("Analizando sentencia de expresión...")
-        
+
         # Si encontramos directamente ';', es una expresión vacía
         if self.coincidir(';'):
+            token_puntoycoma = self.token_actual()
             self.avanzar()
-            return NodoAST("expresion_vacia")
-        
+            nodo_vacio = NodoAST("expresion_vacia")
+            if token_puntoycoma:
+                nodo_vacio.set_posicion(token_puntoycoma.linea, token_puntoycoma.columna)
+            return nodo_vacio
+
         # Sino, debería haber una expresión seguida de ';'
         nodo = self.expresion()
-        
+
+        # Propagar posición si no tiene
+        if nodo and nodo.linea is None and self.token_actual():
+            nodo.set_posicion(self.token_actual().linea, self.token_actual().columna)
+
         if not self.consumir(';', "Se esperaba ';' después de la expresión"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
-        
+
         return nodo
-    
+
+
     def expresion(self):
         """expresion → expresion_logica"""
         print("Analizando expresión...")
-        return self.expresion_logica()
+        nodo = self.expresion_logica()
+
+        # Seguridad: si no hay posición, tomarla del token actual
+        if nodo and nodo.linea is None and self.token_actual():
+            nodo.set_posicion(self.token_actual().linea, self.token_actual().columna)
+
+        return nodo
 
 
     def expresion_logica(self):
@@ -775,6 +842,10 @@ class AnalizadorSintactico:
             nuevo_nodo = NodoAST("log_op", op_token.valor)
             nuevo_nodo.agregar_hijo(nodo_izq)
             nuevo_nodo.agregar_hijo(nodo_der)
+
+            # Posición del operador lógico
+            if op_token:
+                nuevo_nodo.set_posicion(op_token.linea, op_token.columna)
 
             nodo_izq = nuevo_nodo
 
@@ -803,12 +874,16 @@ class AnalizadorSintactico:
             nodo_op.agregar_hijo(nodo_izq)
             nodo_op.agregar_hijo(nodo_der)
 
+            # Asignar posición al nodo del operador relacional
+            if op_token:
+                nodo_op.set_posicion(op_token.linea, op_token.columna)
+
             return nodo_op
 
         return nodo_izq
 
 
-        
+
     def expresion_simple(self):
         """expresion_simple → termino { suma_op termino }"""
         print("Analizando expresión simple...")
@@ -836,8 +911,15 @@ class AnalizadorSintactico:
             nuevo_nodo.agregar_hijo(nodo_izq)
             nuevo_nodo.agregar_hijo(nodo_der)
 
-            # El nuevo nodo se convierte en el nodo izquierdo para el siguiente operador
+            # Asignar posición desde el token del operador
+            if op_token:
+                nuevo_nodo.set_posicion(op_token.linea, op_token.columna)
+
             nodo_izq = nuevo_nodo
+
+        # Si el nodo no tiene posición, usar la del primer término
+        if nodo_izq and nodo_izq.linea is None and self.token_actual():
+            nodo_izq.set_posicion(self.token_actual().linea, self.token_actual().columna)
 
         return nodo_izq
 
@@ -869,8 +951,14 @@ class AnalizadorSintactico:
             nuevo_nodo.agregar_hijo(nodo_izq)
             nuevo_nodo.agregar_hijo(nodo_der)
 
+            # Asignar línea y columna
+            if op_token:
+                nuevo_nodo.set_posicion(op_token.linea, op_token.columna)
+
             nodo_izq = nuevo_nodo  # Este pasa a ser el nodo base para el siguiente operador
+
         return nodo_izq
+
 
     def factor(self):
         """factor → componente { '^' componente }"""
@@ -892,66 +980,18 @@ class AnalizadorSintactico:
                 )
                 return nodo_izq
 
-            # En la potencia el operador es **asociativo a la derecha** (por convención)
+            # En la potencia el operador es **asociativo a la derecha**
             nuevo_nodo = NodoAST("pot_op", op_token.valor)
             nuevo_nodo.agregar_hijo(nodo_izq)
             nuevo_nodo.agregar_hijo(nodo_der)
 
+            # Asignar posición desde el operador
+            if op_token:
+                nuevo_nodo.set_posicion(op_token.linea, op_token.columna)
+
             nodo_izq = nuevo_nodo
 
         return nodo_izq
-
-
-    # def componente(self):
-    #     """componente → ( expresion ) | número | id | bool | op_logico componente"""
-    #     print("Analizando componente...")
-    #     token = self.token_actual()
-        
-    #     if not token:
-    #         self.agregar_error("Se esperaba una expresión", self.obtener_ultima_posicion_valida())
-    #         return None
-        
-    #     # Operador lógico unario
-    #     if token.tipo == 'OPERADOR_LOGICO' and token.valor in ['!']:
-    #         nodo = NodoAST("componente_logico")
-    #         op_nodo = NodoAST("op_logico", token.valor)
-    #         nodo.agregar_hijo(op_nodo)
-    #         self.avanzar()  # Consumir operador lógico
-            
-    #         comp = self.componente()
-    #         if comp:
-    #             nodo.agregar_hijo(comp)
-    #         return nodo
-        
-    #     # Expresión entre paréntesis
-    #     if self.coincidir('('):
-    #         self.avanzar()  # Consumir '('
-    #         expr = self.expresion()
-    #         if not self.consumir(')', "Se esperaba ')' después de la expresión"):
-    #             self.sincronizar_hasta([';'])
-    #         return expr
-        
-    #     # Números, identificadores
-    #     if token.tipo in ['NUMERO_ENTERO', 'NUMERO_DECIMAL', 'NUMERO_REAL', 'IDENTIFICADOR']:
-    #         nodo = NodoAST("componente", token.valor)
-    #         nodo.linea = token.linea
-    #         nodo.columna = token.columna
-    #         self.avanzar()
-    #         return nodo
-        
-    #     # Valores booleanos
-    #     if token.tipo == 'IDENTIFICADOR' and token.valor in ['true', 'false']:
-    #         nodo = NodoAST("bool", token.valor)
-    #         nodo.linea = token.linea
-    #         nodo.columna = token.columna
-    #         self.avanzar()
-    #         return nodo
-        
-    #     self.agregar_error(
-    #         f"Se esperaba número, identificador o expresión entre paréntesis, se encontró '{token.valor}' ({token.tipo})", 
-    #         (token.linea, token.columna)
-    #     )
-    #     return None
 
 
     def componente(self):
@@ -963,40 +1003,54 @@ class AnalizadorSintactico:
             self.agregar_error("Se esperaba una expresión", self.obtener_ultima_posicion_valida())
             return None
 
-        # Operador lógico unario
+        # ---- Operador lógico unario ----
         if token.tipo == 'OPERADOR_LOGICO' and token.valor == '!':
             nodo = NodoAST("componente_logico")
+            nodo.set_posicion(token.linea, token.columna)
+
             op_nodo = NodoAST("op_logico", token.valor)
+            op_nodo.set_posicion(token.linea, token.columna)
+
             nodo.agregar_hijo(op_nodo)
             self.avanzar()
+
             comp = self.componente()
             if comp:
                 nodo.agregar_hijo(comp)
+            else:
+                self.agregar_error("Se esperaba un componente después del operador '!'", 
+                                (token.linea, token.columna))
             return nodo
 
-        # Paréntesis
+        # ---- Paréntesis ----
         if self.coincidir('('):
+            token_par = self.token_actual()
             self.avanzar()
             expr = self.expresion()
             if not self.consumir(')', "Se esperaba ')' después de la expresión"):
                 self.sincronizar_hasta([';'])
+            if expr and expr.linea is None:
+                expr.set_posicion(token_par.linea, token_par.columna)
             return expr  
 
-        # Números o identificadores
+        # ---- Números ----
         if token.tipo in ['NUMERO_ENTERO', 'NUMERO_DECIMAL', 'NUMERO_REAL']:
             nodo = NodoAST("numero", token.valor)
+            nodo.set_posicion(token.linea, token.columna)
             self.avanzar()
             return nodo
 
+        # ---- Identificadores y booleanos ----
         if token.tipo == 'IDENTIFICADOR':
-            # Validar si es booleano
             if token.valor in ['true', 'false']:
                 nodo = NodoAST("bool", token.valor)
             else:
                 nodo = NodoAST("id", token.valor)
+            nodo.set_posicion(token.linea, token.columna)
             self.avanzar()
             return nodo
 
+        # ---- Error ----
         self.agregar_error(
             f"Se esperaba número, identificador o expresión entre paréntesis, se encontró '{token.valor}' ({token.tipo})",
             (token.linea, token.columna)
@@ -1006,244 +1060,318 @@ class AnalizadorSintactico:
     def seleccion(self):
         """seleccion → if expresion then lista_sentencias [ else lista_sentencias ] end"""
         print("Analizando selección (if)...")
-        nodo = NodoAST("seleccion")
-    
+        token_if = self.token_actual()
+        nodo_seleccion = NodoAnotado("seleccion", valor="if")
+
         # Consumir 'if'
-        if not self.consumir('if'):
+        if not self.consumir('if', "Se esperaba 'if' al inicio de la selección"):
+            self.sincronizar_hasta(self.tokens_sync_sentencia)
             return None
-    
-        # Consumir expresión de condición
+
+        # Guardar posición del 'if'
+        nodo_seleccion.linea = getattr(token_if, "linea", 0)
+        nodo_seleccion.columna = getattr(token_if, "columna", 0)
+
+        # Expresión de condición
         expr = self.expresion()
         if expr:
-            nodo.agregar_hijo(expr)
+            nodo_cond = NodoAnotado("condicion")
+            nodo_cond.agregar_hijo(expr)
+            nodo_seleccion.agregar_hijo(nodo_cond)
         else:
             self.agregar_error("Se esperaba una expresión de condición después de 'if'",
                             self.obtener_ultima_posicion_valida())
             return None
-    
+
         # Consumir 'then'
         if not self.consumir('then', "Se esperaba 'then' después de la condición en el 'if'"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
             return None
-        
-        # VALIDACIÓN: Verificar que no haya ';' después de 'then'
-        if self.token_actual() and self.token_actual().valor == ';':
-            self.agregar_error("No se esperaba ';' después de 'then'", 
-                            (self.token_actual().linea, self.token_actual().columna))
-            return None
-    
-        # Consumir lista de sentencias del if
+
+        # Lista de sentencias del bloque if
         lista_if = self.lista_sentencias()
         if lista_if:
-            nodo.agregar_hijo(lista_if)
-    
-        # Verificar si hay 'else'
+            nodo_if = NodoAnotado("bloque_if")
+            nodo_if.agregar_hijo(lista_if)
+            nodo_seleccion.agregar_hijo(nodo_if)
+        else:
+            self.agregar_error("El bloque 'if' no contiene sentencias válidas",
+                            self.obtener_ultima_posicion_valida())
+
+        # Bloque opcional 'else'
         if self.coincidir('else'):
-            self.avanzar()  # Consumir 'else'
-            
-            # VALIDACIÓN: Verificar que no haya ';' después de 'else'
-            if self.token_actual() and self.token_actual().valor == ';':
-                self.agregar_error("No se esperaba ';' después de 'else'", 
-                                (self.token_actual().linea, self.token_actual().columna))
-                return None
-            
+            token_else = self.token_actual()
+            self.avanzar()
+
             lista_else = self.lista_sentencias()
+            nodo_else = NodoAnotado("bloque_else", valor="else")
+            nodo_else.linea = getattr(token_else, "linea", 0)
+            nodo_else.columna = getattr(token_else, "columna", 0)
+
             if lista_else:
-                nodo_else = NodoAST("else")
                 nodo_else.agregar_hijo(lista_else)
-                nodo.agregar_hijo(nodo_else)
-    
+            else:
+                self.agregar_error("El bloque 'else' no contiene sentencias válidas",
+                                self.obtener_ultima_posicion_valida())
+
+            nodo_seleccion.agregar_hijo(nodo_else)
+
         # Consumir 'end'
-        if not self.consumir('end', "Se esperaba 'end' para cerrar el if"):
+        if not self.consumir('end', "Se esperaba 'end' para cerrar el bloque 'if'"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
             return None
-    
-        return nodo
 
-    
+        return nodo_seleccion
+
+
+
     def iteracion(self):
         """iteracion → while expresion lista_sentencias end"""
         print("Analizando iteración (while)...")
-        nodo = NodoAST("iteracion")
+        token_while = self.token_actual()
+        nodo_iteracion = NodoAnotado("iteracion", valor="while")
 
+        # Consumir 'while'
         if not self.consumir('while', "Se esperaba 'while' para iniciar la iteración"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
             return None
 
+        # Guardar posición del 'while'
+        nodo_iteracion.linea = getattr(token_while, "linea", 0)
+        nodo_iteracion.columna = getattr(token_while, "columna", 0)
+
+        # Condición del while
         expr = self.expresion()
         if expr:
-            nodo_cond = NodoAST("condicion")
+            nodo_cond = NodoAnotado("condicion")
             nodo_cond.agregar_hijo(expr)
-            nodo.agregar_hijo(nodo_cond)
+            nodo_iteracion.agregar_hijo(nodo_cond)
         else:
-            self.agregar_error("Se esperaba una condición después de 'while'", self.obtener_ultima_posicion_valida())
+            self.agregar_error("Se esperaba una condición después de 'while'",
+                            self.obtener_ultima_posicion_valida())
             return None
 
+        # Lista de sentencias del cuerpo del while
         lista = self.lista_sentencias()
         if lista:
-            nodo_lista = NodoAST("lista_sentencias")
-            for hijo in lista.hijos:
-                nodo_lista.agregar_hijo(hijo)
-            nodo.agregar_hijo(nodo_lista)
+            nodo_lista = NodoAnotado("bloque_while")
+            nodo_lista.agregar_hijo(lista)
+            nodo_iteracion.agregar_hijo(nodo_lista)
+        else:
+            self.agregar_error("El bloque 'while' no contiene sentencias válidas",
+                            self.obtener_ultima_posicion_valida())
 
-        if not self.consumir('end', "Se esperaba 'end' para cerrar el while"):
+        # Consumir 'end'
+        if not self.consumir('end', "Se esperaba 'end' para cerrar el bloque 'while'"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
 
-        return nodo
+        return nodo_iteracion
 
 
     def repeticion(self):
         """repeticion → do lista_sentencias (while|until) expresion"""
         print("Analizando repetición (do-while/do-until)…")
-        # Creamos el nodo padre con un valor genérico o guardando el tipo:
-        nodo = NodoAST("repeticion")
+        token_do = self.token_actual()
+        nodo = NodoAnotado("repeticion", valor="do")
 
         # Consumir 'do'
         if not self.consumir('do', "Se esperaba 'do' al inicio de la repetición"):
             return None
 
-        # Primero el cuerpo del bucle
+        nodo.linea = token_do.linea
+        nodo.columna = token_do.columna
+
+        # Cuerpo del bucle
         lista = self.lista_sentencias()
         if lista:
-            nodo.agregar_hijo(lista)
+            nodo_bloque = NodoAnotado("bloque_do")
+            nodo_bloque.agregar_hijo(lista)
+            nodo.agregar_hijo(nodo_bloque)
 
-        # Ahora detectamos si es while o until
+        # Detectar 'while' o 'until'
         if self.coincidir('while') or self.coincidir('until'):
-            tipo = self.token_actual().valor  # "while" o "until"
-            self.avanzar()  # consumimos la palabra clave
+            token_tipo = self.token_actual()
+            tipo = token_tipo.valor
+            self.avanzar()
 
-            # La expresión de condición
+            # Condición
             expr = self.expresion()
-            if not expr:
-                self.agregar_error(f"Se esperaba una expresión después de '{tipo}'",
-                                self.obtener_ultima_posicion_valida())
-            else:
-                # Creamos el mismo subnodo 'condicion' que en tu iteración normal
-                nodo_cond = NodoAST("condicion", tipo)
+            if expr:
+                nodo_cond = NodoAnotado("condicion", valor=tipo)
+                nodo_cond.linea = token_tipo.linea
+                nodo_cond.columna = token_tipo.columna
                 nodo_cond.agregar_hijo(expr)
                 nodo.agregar_hijo(nodo_cond)
+            else:
+                self.agregar_error(f"Se esperaba una expresión después de '{tipo}'",
+                                self.obtener_ultima_posicion_valida())
         else:
             self.agregar_error("Se esperaba 'while' o 'until' después del bloque 'do'",
                             self.obtener_ultima_posicion_valida())
 
         return nodo
 
+
     def sent_in(self):
         """sent_in → cin >> id ;"""
         print("Analizando sentencia de entrada (cin)...")
-        
-        # Capturar el token 'cin' para obtener su posición
+
         token_cin = self.token_actual()
-        nodo = NodoAST("sent_in")
-        
-        # Establecer la posición del nodo sent_in
+        nodo = NodoAnotado("sent_in", valor="cin")
+
         if token_cin:
-            nodo.set_posicion(token_cin.linea, token_cin.columna)
-        
+            nodo.linea = token_cin.linea
+            nodo.columna = token_cin.columna
+
         # Consumir 'cin'
         self.consumir('cin')
-        
-        # Consumir >>
+
+        # Consumir '>>'
         if not self.consumir('>>', "Se esperaba '>>' después de cin"):
             self.sincronizar_hasta([';'])
             return nodo
-        
-        # Consumir identificador
+
+        # Identificador
         token_id = self.token_actual()
         if not self.coincidir('IDENTIFICADOR'):
-            self.agregar_error("Se esperaba identificador después de cin >>", 
+            self.agregar_error("Se esperaba identificador después de cin >>",
                             self.obtener_ultima_posicion_valida())
             self.sincronizar_hasta([';'])
             return nodo
-        
-        # Crear nodo para el identificador
-        nodo_id = NodoAST("id", token_id.valor)
-        # Establecer la posición del identificador
-        if token_id:
-            nodo_id.set_posicion(token_id.linea, token_id.columna)
-        
+
+        nodo_id = NodoAnotado("id", valor=token_id.valor)
+        nodo_id.linea = token_id.linea
+        nodo_id.columna = token_id.columna
         nodo.agregar_hijo(nodo_id)
-        self.avanzar()  # Consumir el identificador
-        
+        self.avanzar()
+
         # Consumir ';'
         if not self.consumir(';', "Se esperaba ';' después de la sentencia cin"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
-        
+
         return nodo
 
+
     def sent_out(self):
-        """sent_out → cout << salida"""
+        """sent_out → cout << salida ;"""
         print("Analizando sentencia de salida (cout)...")
-        nodo = NodoAST("sent_out")
-        
+
+        token_cout = self.token_actual()
+        nodo = NodoAnotado("sent_out", valor="cout")
+
+        if token_cout:
+            nodo.linea = token_cout.linea
+            nodo.columna = token_cout.columna
+
         # Consumir 'cout'
         self.consumir('cout')
-        
-        # CORRECCIÓN: Consumir << como un solo token
+
+        # Consumir '<<'
         if not self.consumir('<<', "Se esperaba '<<' después de cout"):
             self.sincronizar_hasta([';'])
             return nodo
-        
-        # Consumir salida
+
+        # Procesar salida
         salida = self.salida()
         if salida:
             nodo.agregar_hijo(salida)
-        
+
         # Consumir ';'
         if not self.consumir(';', "Se esperaba ';' después de la sentencia cout"):
             self.sincronizar_hasta(self.tokens_sync_sentencia)
-        
+
         return nodo
+
 
     def salida(self):
         """salida → cadena | expresion | cadena << expresion | expresion << cadena"""
         print("Analizando salida...")
-        nodo = NodoAST("salida")
-        
-        # Intentar procesar como expresión primero
+        nodo = NodoAnotado("salida")
+
+        token = self.token_actual()
+        if not token:
+            self.agregar_error("Se esperaba una cadena o expresión en la salida",
+                            self.obtener_ultima_posicion_valida())
+            return nodo
+
+        # Si es cadena literal
+        if token.tipo == 'CADENA':
+            nodo_cadena = NodoAnotado("cadena", valor=token.valor)
+            nodo_cadena.linea = token.linea
+            nodo_cadena.columna = token.columna
+            nodo.agregar_hijo(nodo_cadena)
+            self.avanzar()
+
+            # Posible "<<" expresión
+            if self.coincidir('<<'):
+                self.avanzar()
+                expr = self.expresion()
+                if expr:
+                    nodo.agregar_hijo(expr)
+            return nodo
+
+        # Si es expresión
         expr = self.expresion()
         if expr:
             nodo.agregar_hijo(expr)
-        
+            if self.coincidir('<<'):
+                self.avanzar()
+                token_cad = self.token_actual()
+                if token_cad and token_cad.tipo == 'CADENA':
+                    nodo_cad = NodoAnotado("cadena", valor=token_cad.valor)
+                    nodo_cad.linea = token_cad.linea
+                    nodo_cad.columna = token_cad.columna
+                    nodo.agregar_hijo(nodo_cad)
+                    self.avanzar()
+            return nodo
+
+        self.agregar_error("Salida inválida, se esperaba cadena o expresión", 
+                        self.obtener_ultima_posicion_valida())
         return nodo
+
 
     def incremento_decremento(self):
         """Maneja operadores ++ y -- como asignaciones implícitas"""
         print("Analizando incremento/decremento...")
 
-        # Consumir identificador
         token_id = self.consumir('IDENTIFICADOR')
         if not token_id:
             self.agregar_error("Se esperaba un identificador antes del operador de incremento/decremento",
                             self.obtener_ultima_posicion_valida())
             return None
 
-        # Verificar operador ++ o --
+        # Verificar ++ o --
         if self.coincidir('++') or self.coincidir('--'):
-            operador = self.token_actual().valor  # Guardar el operador ("++" o "--")
+            token_op = self.token_actual()
+            operador = token_op.valor
             self.avanzar()
 
-            # Crear nodo de asignación: asignacion: a
-            nodo_asignacion = NodoAST("asignacion", token_id.valor)
+            # Nodo asignación anotado
+            nodo_asig = NodoAnotado("asignacion", valor=token_id.valor)
+            nodo_asig.linea = token_id.linea
+            nodo_asig.columna = token_id.columna
 
-            # Crear nodo expresion_simple: +
+            # Nodo operación aritmética
             op = '+' if operador == '++' else '-'
-            nodo_expr = NodoAST("expresion_simple", op)
+            nodo_expr = NodoAnotado("expresion_simple", valor=op)
+            nodo_expr.linea = token_op.linea
+            nodo_expr.columna = token_op.columna
 
-            # Hijos: id: a y numero: 1
-            nodo_id = NodoAST("id", token_id.valor)
-            nodo_num = NodoAST("numero", "1")
+            # Hijos
+            nodo_id = NodoAnotado("id", valor=token_id.valor)
+            nodo_id.linea = token_id.linea
+            nodo_id.columna = token_id.columna
+            nodo_num = NodoAnotado("numero", valor="1")
 
             nodo_expr.agregar_hijo(nodo_id)
             nodo_expr.agregar_hijo(nodo_num)
-
-            nodo_asignacion.agregar_hijo(nodo_expr)
+            nodo_asig.agregar_hijo(nodo_expr)
 
             # Consumir ';'
             if not self.consumir(';', "Se esperaba ';' después del incremento/decremento"):
                 self.sincronizar_hasta(self.tokens_sync_sentencia)
 
-            return nodo_asignacion
+            return nodo_asig
 
         # Si no hay ++ o --
         self.agregar_error("Se esperaba operador '++' o '--' después del identificador",
@@ -1263,6 +1391,10 @@ class AnalizadorSintactico:
                 return None, self.errores
             
             self.ast = self.programa()
+
+            print("\n=== ÁRBOL SINTÁCTICO CON POSICIONES ===")
+            if self.ast:
+                self.ast.debug()
             
             # Verificar que no sobren tokens
             if self.token_actual():

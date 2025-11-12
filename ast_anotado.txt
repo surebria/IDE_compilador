@@ -73,27 +73,31 @@ programa
           numero: 4 | Tipo: int | Valor: 4
     asignacion: y | Tipo: int | Valor: error
       numero: 14.54 | Tipo: float | Valor: 14.54
-    seleccion
-      rel_op: > | Tipo: bool | Valor: False
-        numero: 2 | Tipo: int | Valor: 2
-        numero: 3 | Tipo: int | Valor: 3
-      lista_sentencias
-        asignacion: y | Tipo: int | Valor: error
-          suma_op: + | Tipo: float | Valor: 64.0
-            id: a | Tipo: float | Valor: 61.0
-            numero: 3 | Tipo: int | Valor: 3
-      else
+    seleccion: if
+      condicion | Tipo: bool | Valor: False
+        rel_op: > | Tipo: bool | Valor: False
+          numero: 2 | Tipo: int | Valor: 2
+          numero: 3 | Tipo: int | Valor: 3
+      bloque_if
         lista_sentencias
-          seleccion
-            log_op: && | Tipo: bool | Valor: True
-              rel_op: > | Tipo: bool | Valor: True
-                numero: 4 | Tipo: int | Valor: 4
-                numero: 2 | Tipo: int | Valor: 2
-              bool: true | Tipo: bool | Valor: True
-            lista_sentencias
-              asignacion: b | Tipo: float | Valor: 3.2
-                numero: 3.2 | Tipo: float | Valor: 3.2
-            else
+          asignacion: y | Tipo: int | Valor: error
+            suma_op: + | Tipo: float | Valor: 64.0
+              id: a | Tipo: float | Valor: 61.0
+              numero: 3 | Tipo: int | Valor: 3
+      bloque_else: else
+        lista_sentencias
+          seleccion: if
+            condicion | Tipo: bool | Valor: True
+              log_op: && | Tipo: bool | Valor: True
+                rel_op: > | Tipo: bool | Valor: True
+                  numero: 4 | Tipo: int | Valor: 4
+                  numero: 2 | Tipo: int | Valor: 2
+                bool: true | Tipo: bool | Valor: True
+            bloque_if
+              lista_sentencias
+                asignacion: b | Tipo: float | Valor: 3.2
+                  numero: 3.2 | Tipo: float | Valor: 3.2
+            bloque_else: else
               lista_sentencias
                 asignacion: b | Tipo: float | Valor: 5.0
                   numero: 5.0 | Tipo: float | Valor: 5.0
@@ -113,47 +117,50 @@ programa
       suma_op: + | Tipo: int | Valor: 7
         numero: 3 | Tipo: int | Valor: 3
         numero: 4 | Tipo: int | Valor: 4
-    repeticion
-      lista_sentencias
-        asignacion: y | Tipo: int | Valor: 1
-          suma_op: + | Tipo: int | Valor: 1
-            mult_op: * | Tipo: int | Valor: 0
-              suma_op: + | Tipo: int | Valor: 0
-                id: y | Tipo: int | Valor: -1
-                numero: 1 | Tipo: int | Valor: 1
-              numero: 2 | Tipo: int | Valor: 2
-            numero: 1 | Tipo: int | Valor: 1
-        iteracion
-          condicion | Tipo: bool | Valor: False
-            rel_op: > | Tipo: bool | Valor: False
-              id: x | Tipo: int | Valor: 7
-              numero: 7 | Tipo: int | Valor: 7
-          lista_sentencias
-            asignacion: x | Tipo: int | Valor: 6
-              suma_op: + | Tipo: int | Valor: 6
-                numero: 6 | Tipo: int | Valor: 6
-                mult_op: / | Tipo: int | Valor: 0
-                  mult_op: * | Tipo: int | Valor: 0
+    repeticion: do
+      bloque_do
+        lista_sentencias
+          asignacion: y | Tipo: int | Valor: 1
+            suma_op: + | Tipo: int | Valor: 1
+              mult_op: * | Tipo: int | Valor: 0
+                suma_op: + | Tipo: int | Valor: 0
+                  id: y | Tipo: int | Valor: -1
+                  numero: 1 | Tipo: int | Valor: 1
+                numero: 2 | Tipo: int | Valor: 2
+              numero: 1 | Tipo: int | Valor: 1
+          iteracion: while
+            condicion | Tipo: bool | Valor: False
+              rel_op: > | Tipo: bool | Valor: False
+                id: x | Tipo: int | Valor: 7
+                numero: 7 | Tipo: int | Valor: 7
+            bloque_while
+              lista_sentencias
+                asignacion: x | Tipo: int | Valor: 6
+                  suma_op: + | Tipo: int | Valor: 6
+                    numero: 6 | Tipo: int | Valor: 6
                     mult_op: / | Tipo: int | Valor: 0
-                      numero: 8 | Tipo: int | Valor: 8
-                      numero: 9 | Tipo: int | Valor: 9
-                    numero: 8 | Tipo: int | Valor: 8
-                  numero: 3 | Tipo: int | Valor: 3
-            sent_in
-              id: x | Tipo: int
-            asignacion: mas | Tipo: error | Valor: error
+                      mult_op: * | Tipo: int | Valor: 0
+                        mult_op: / | Tipo: int | Valor: 0
+                          numero: 8 | Tipo: int | Valor: 8
+                          numero: 9 | Tipo: int | Valor: 9
+                        numero: 8 | Tipo: int | Valor: 8
+                      numero: 3 | Tipo: int | Valor: 3
+                sent_in: cin
+                  id: x | Tipo: int
+                asignacion: mas | Tipo: error | Valor: error
       condicion: until | Tipo: bool | Valor: False
         rel_op: == | Tipo: bool | Valor: False
           id: y | Tipo: int | Valor: 1
           numero: 5 | Tipo: int | Valor: 5
-    iteracion
+    iteracion: while
       condicion | Tipo: bool | Valor: False
         rel_op: == | Tipo: bool | Valor: False
           id: y | Tipo: int | Valor: 1
           numero: 0 | Tipo: int | Valor: 0
-      lista_sentencias
-        sent_in
-          id: mas | Tipo: error
-        sent_out
-          salida | Tipo: int | Valor: 6
-            id: x | Tipo: int | Valor: 6
+      bloque_while
+        lista_sentencias
+          sent_in: cin
+            id: mas | Tipo: error
+          sent_out: cout
+            salida | Tipo: int | Valor: 6
+              id: x | Tipo: int | Valor: 6

@@ -25,7 +25,6 @@ class ErrorSemantico:
             "fatal": self.fatal
         }
 
-
 class Simbolo:
     """Representa un símbolo en la tabla de símbolos."""
     def __init__(self, nombre, tipo, valor=None, linea=0, columna=0, ambito='global'):
@@ -35,16 +34,21 @@ class Simbolo:
         self.linea = linea
         self.columna = columna
         self.ambito = ambito
-        self.ubicaciones = [(linea, columna)]  # Lista de usos
+        self.ubicaciones = [(linea, columna)] if linea > 0 else []  # ⭐ Solo agregar si es válida
     
     def agregar_uso(self, linea, columna):
-        """Registra un nuevo uso de la variable."""
-        self.ubicaciones.append((linea, columna))
+        """Registra un nuevo uso de la variable (solo si es válido)."""
+        # ⭐ Validar que línea y columna sean números válidos
+        if linea and isinstance(linea, int) and linea > 0:
+            if (linea, columna) not in self.ubicaciones:
+                self.ubicaciones.append((linea, columna))
 
     def agregar_ubicacion(self, linea, columna):
         """Agrega una nueva ubicación (línea, columna) de uso del símbolo."""
-        if (linea, columna) not in self.ubicaciones:
-            self.ubicaciones.append((linea, columna))
+        # ⭐ Validar antes de agregar
+        if linea and isinstance(linea, int) and linea > 0:
+            if (linea, columna) not in self.ubicaciones:
+                self.ubicaciones.append((linea, columna))
     
     def get_ubicaciones_str(self):
         """Retorna las ubicaciones como string."""
@@ -55,15 +59,14 @@ class Simbolo:
             "nombre": self.nombre,
             "tipo": self.tipo,
             "valor": self.valor,
-            "linea": self.linea, # Línea de declaración (original)
-            "columna": self.columna, # Columna de declaración (original)
+            "linea": self.linea,
+            "columna": self.columna,
             "ambito": self.ambito,
-            # Formatea las ubicaciones: (Línea, Columna) -> "L:C, L:C, ..."
             "ubicaciones_str": ", ".join([f"{l}:{c}" for l, c in self.ubicaciones])
         }
+    
     def __str__(self):
         return f"Simbolo({self.nombre}, {self.tipo}, valor={self.valor}, ámbito={self.ambito})"
-
 
 class TablaSimbolos:
     """Tabla de símbolos con soporte para ámbitos."""
@@ -101,18 +104,17 @@ class TablaSimbolos:
         return True, None
     
     def lookup(self, nombre, linea, columna):
-        """
-        Busca una variable, primero en el ámbito actual y luego en ámbitos padres.
-        Registra el uso de la variable.
-        Retorna (simbolo, mensaje_error).
-        """
-        # Buscar en ámbito actual y padres
         for i in range(len(self.pila_ambitos) - 1, -1, -1):
             ambito = self.pila_ambitos[i]
             clave = f"{ambito}_{nombre}"
             if clave in self.tabla:
                 simbolo = self.tabla[clave]
-                simbolo.agregar_uso(linea, columna)
+
+                if linea and isinstance(linea, int) and linea > 0:
+                    print(f"Registrando uso de '{nombre}' en línea {linea}")  # DEBUG
+                    simbolo.agregar_uso(linea, columna)
+                else:
+                    print(f"Intentando registrar '{nombre}' con linea={linea}, columna={columna}")  # DEBUG
                 return simbolo, None
         
         return None, f"Variable '{nombre}' no declarada"
@@ -238,6 +240,9 @@ class AnalizadorSemantico:
         elif nodo.tipo == "asignacion":
             self.procesar_asignacion(nodo, nodo_anotado)
         
+        elif nodo.tipo in ["incremento", "decremento", "post_inc", "post_dec"]:
+            self.procesar_incremento_decremento(nodo, nodo_anotado)
+        
         elif nodo.tipo == "seleccion":
             self.procesar_seleccion(nodo, nodo_anotado)
         
@@ -316,70 +321,34 @@ class AnalizadorSemantico:
                         nodo_anotado.agregar_hijo(id_anotado)
         
         nodo_anotado.tipo_dato = tipo_dato
-    
-    # def procesar_asignacion(self, nodo, nodo_anotado):
-    #     """Procesa asignación con verificación de tipos."""
-    #     nombre_var = nodo.valor
-    #     linea = getattr(nodo, 'linea', 0) or 0
-    #     columna = getattr(nodo, 'columna', 0) or 0
-        
-    #     # Verificar que la variable esté declarada
-    #     simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
-        
-    #     if not simbolo:
-    #         self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
-    #         nodo_anotado.tipo_dato = "desconocido"
-    #         nodo_anotado.valor_calculado = None
-    #         return
-        
-    #     # Evaluar expresión del lado derecho
-    #     if nodo.hijos:
-    #         expr_anotada = self.evaluar_expresion(nodo.hijos[0])
-    #         nodo_anotado.agregar_hijo(expr_anotada)
-            
-    #         # Verificar compatibilidad de tipos
-    #         if expr_anotada.tipo_dato and simbolo.tipo:
-    #             es_compatible, mensaje = self.check_type_compatibility(
-    #                 simbolo.tipo, expr_anotada.tipo_dato, linea, columna
-    #             )
-    #             if not es_compatible:
-    #                 self.report_error("TIPO_INCOMPATIBLE", mensaje, linea, columna)
-            
-    #         # Actualizar valor en tabla de símbolos
-    #         if expr_anotada.valor_calculado is not None:
-    #             self.tabla_simbolos.actualizar_valor(nombre_var, expr_anotada.valor_calculado)
-            
-    #         nodo_anotado.tipo_dato = simbolo.tipo
-    #         nodo_anotado.valor_calculado = expr_anotada.valor_calculado
-    #     else:
-    #         nodo_anotado.tipo_dato = simbolo.tipo
-    #         nodo_anotado.valor_calculado = None
+
 
     def procesar_asignacion(self, nodo, nodo_anotado):
         """Procesa asignación con verificación de tipos."""
         nombre_var = nodo.valor
-        linea = getattr(nodo, 'linea', 0) or 0
-        columna = getattr(nodo, 'columna', 0) or 0
+        linea = getattr(nodo, 'linea', None)
+        columna = getattr(nodo, 'columna', None)
         
-        # Verificar que la variable esté declarada
+        if linea == 0:
+            linea = None
+        if columna == 0:
+            columna = None
+        
         simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
         
         if not simbolo:
-            self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
-            # nodo_anotado.tipo_dato = "desconocido"
-            # nodo_anotado.valor_calculado = None
+            linea_error = linea if linea else 0
+            columna_error = columna if columna else 0
+            self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea_error, columna_error)
             nodo_anotado.tipo_dato = "error"
             nodo_anotado.valor_calculado = "error"
             return
-        
-        
-        # Evaluar expresión del lado derecho
+
         if nodo.hijos:
             expr_anotada = self.evaluar_expresion(nodo.hijos[0])
             nodo_anotado.agregar_hijo(expr_anotada)
 
             if simbolo.tipo == "int" and expr_anotada.tipo_dato == "float":
-                # Reportar error
                 self.report_error(
                     "TIPO_INCOMPATIBLE",
                     f"No puedes asignar un float ({expr_anotada.valor_calculado}) a una variable int",
@@ -411,6 +380,38 @@ class AnalizadorSemantico:
             nodo_anotado.tipo_dato = simbolo.tipo
             nodo_anotado.valor_calculado = None
 
+    def procesar_incremento_decremento(self, nodo, nodo_anotado):
+        """Procesa operadores ++ y --."""
+        nombre_var = nodo.valor
+        linea = getattr(nodo, 'linea', None)
+        columna = getattr(nodo, 'columna', None)
+        
+        if linea == 0:
+            linea = None
+        if columna == 0:
+            columna = None
+        
+        # Buscar la variable y registrar su uso
+        simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
+        
+        if not simbolo:
+            linea_error = linea if linea else 0
+            columna_error = columna if columna else 0
+            self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea_error, columna_error)
+            nodo_anotado.tipo_dato = "error"
+            return
+        
+        # Verificar que sea numérico
+        if simbolo.tipo not in ['int', 'float']:
+            linea_error = linea if linea else 0
+            columna_error = columna if columna else 0
+            self.report_error("TIPO_INCOMPATIBLE", 
+                            f"Operador {nodo.tipo} no válido para tipo {simbolo.tipo}",
+                            linea_error, columna_error)
+        
+        nodo_anotado.tipo_dato = simbolo.tipo
+        nodo_anotado.valor_calculado = None  # No calculamos el valor en tiempo de compilación
+
     
     def evaluar_expresion(self, nodo):
         """Evalúa una expresión y retorna nodo anotado con tipo y valor."""
@@ -436,24 +437,31 @@ class AnalizadorSemantico:
             except (ValueError, TypeError):
                 nodo_anotado.valor_calculado = None
         
-        # Identificador
         elif nodo.tipo == "id":
+            linea = getattr(nodo, 'linea', None)
+            columna = getattr(nodo, 'columna', None)
+            
+            if not linea or linea == 0:
+                linea = None
+            if not columna or columna == 0:
+                columna = None
+
             simbolo, error_msg = self.tabla_simbolos.lookup(
                 nodo.valor,
-                getattr(nodo, 'linea', 0),
-                getattr(nodo, 'columna', 0)
+                linea,
+                columna
             )
+            
             if simbolo:
                 nodo_anotado.tipo_dato = simbolo.tipo
                 nodo_anotado.valor_calculado = simbolo.valor
             else:
-                self.report_error("VARIABLE_NO_DECLARADA", error_msg, 
-                                getattr(nodo, 'linea', 0), getattr(nodo, 'columna', 0))
-                # nodo_anotado.tipo_dato = "desconocido"
-                # nodo_anotado.valor_calculado = None
+                linea_error = linea if linea else 0
+                columna_error = columna if columna else 0
+                self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea_error, columna_error)
                 nodo_anotado.tipo_dato = "error"
                 nodo_anotado.valor_calculado = "error"
-        
+            
         # Booleano
         elif nodo.tipo == "bool":
             nodo_anotado.tipo_dato = "bool"
@@ -574,49 +582,6 @@ class AnalizadorSemantico:
                     nodo_anotado.valor_calculado = int(resultado) if tipo_resultado == 'int' else float(resultado)
             except:
                 nodo_anotado.valor_calculado = None
-    
-    # def evaluar_operacion_relacional(self, nodo, nodo_anotado):
-    #     """Evalúa operaciones relacionales."""
-    #     if len(nodo.hijos) < 2:
-    #         nodo_anotado.tipo_dato = "bool"
-    #         nodo_anotado.valor_calculado = None
-    #         return
-        
-    #     izq = self.evaluar_expresion(nodo.hijos[0])
-    #     der = self.evaluar_expresion(nodo.hijos[1])
-        
-    #     nodo_anotado.agregar_hijo(izq)
-    #     nodo_anotado.agregar_hijo(der)
-    #     nodo_anotado.tipo_dato = "bool"
-        
-    #     if not izq.tipo_dato or not der.tipo_dato:
-    #         nodo_anotado.valor_calculado = None
-    #         return
-        
-    #     # Calcular valor
-    #     if izq.valor_calculado is not None and der.valor_calculado is not None:
-    #         try:
-    #             val_izq = float(izq.valor_calculado)
-    #             val_der = float(der.valor_calculado)
-                
-    #             if nodo.valor == '<':
-    #                 resultado = val_izq < val_der
-    #             elif nodo.valor == '>':
-    #                 resultado = val_izq > val_der
-    #             elif nodo.valor == '<=':
-    #                 resultado = val_izq <= val_der
-    #             elif nodo.valor == '>=':
-    #                 resultado = val_izq >= val_der
-    #             elif nodo.valor == '==':
-    #                 resultado = val_izq == val_der
-    #             elif nodo.valor == '!=':
-    #                 resultado = val_izq != val_der
-    #             else:
-    #                 resultado = None
-                
-    #             nodo_anotado.valor_calculado = resultado
-    #         except:
-    #             nodo_anotado.valor_calculado = None
 
     def evaluar_operacion_relacional(self, nodo, nodo_anotado):
         """Evalúa operaciones relacionales (<, >, <=, >=, ==, !=)."""
@@ -660,45 +625,6 @@ class AnalizadorSemantico:
         except:
             nodo_anotado.valor_calculado = None
 
-    
-    # def evaluar_operacion_logica(self, nodo, nodo_anotado):
-    #     """Evalúa operaciones lógicas."""
-    #     if len(nodo.hijos) < 2:
-    #         nodo_anotado.tipo_dato = "bool"
-    #         nodo_anotado.valor_calculado = None
-    #         return
-        
-    #     izq = self.evaluar_expresion(nodo.hijos[0])
-    #     der = self.evaluar_expresion(nodo.hijos[1])
-        
-    #     nodo_anotado.agregar_hijo(izq)
-    #     nodo_anotado.agregar_hijo(der)
-    #     nodo_anotado.tipo_dato = "bool"
-        
-    #     if not izq.tipo_dato or not der.tipo_dato:
-    #         nodo_anotado.valor_calculado = None
-    #         return
-        
-    #     # Verificar que sean bool
-    #     if izq.tipo_dato != 'bool' or der.tipo_dato != 'bool':
-    #         self.report_error("TIPO_INCOMPATIBLE",
-    #                         "Operadores lógicos requieren operandos bool",
-    #                         getattr(nodo, 'linea', 0), getattr(nodo, 'columna', 0))
-    #         return
-        
-    #     # Calcular valor
-    #     if izq.valor_calculado is not None and der.valor_calculado is not None:
-    #         try:
-    #             val_izq = bool(izq.valor_calculado)
-    #             val_der = bool(der.valor_calculado)
-                
-    #             if nodo.valor == '&&':
-    #                 nodo_anotado.valor_calculado = val_izq and val_der
-    #             elif nodo.valor == '||':
-    #                 nodo_anotado.valor_calculado = val_izq or val_der
-    #         except:
-    #             nodo_anotado.valor_calculado = None
-
     def evaluar_operacion_logica(self, nodo, nodo_anotado):
         """Evalúa operaciones lógicas (AND, OR, NOT)."""
         # NOT es unario
@@ -737,41 +663,17 @@ class AnalizadorSemantico:
             nodo_anotado.valor_calculado = None
 
 
-    
-    # def procesar_seleccion(self, nodo, nodo_anotado):
-    #     """Procesa estructura if-then-else."""
-    #     for hijo in nodo.hijos:
-    #         hijo_anotado = self.anotar_nodo(hijo)
-    #         if hijo_anotado:
-    #             nodo_anotado.agregar_hijo(hijo_anotado)
-
     def procesar_seleccion(self, nodo, nodo_anotado):
-    # hijo[0] = condición
         condicion = self.evaluar_expresion(nodo.hijos[0])
         nodo_anotado.agregar_hijo(condicion)
-
-        # hijo[1] = bloque THEN
         bloque_then = self.anotar_nodo(nodo.hijos[1])
         nodo_anotado.agregar_hijo(bloque_then)
 
-        # hijo[2] = bloque ELSE (opcional)
         if len(nodo.hijos) > 2:
             bloque_else = self.anotar_nodo(nodo.hijos[2])
             nodo_anotado.agregar_hijo(bloque_else)
-
-
-    
-    # def procesar_iteracion(self, nodo, nodo_anotado):
-    #     """Procesa estructura while."""
-    #     for hijo in nodo.hijos:
-    #         hijo_anotado = self.anotar_nodo(hijo)
-    #         if hijo_anotado:
-    #             nodo_anotado.agregar_hijo(hijo_anotado)
     
     def procesar_iteracion(self, nodo, nodo_anotado):
-        # hijo[0] = condición WHILE
-        # hijo[1] = bloque
-
         condicion = self.evaluar_expresion(nodo.hijos[0])
         nodo_anotado.agregar_hijo(condicion)
 
@@ -780,9 +682,6 @@ class AnalizadorSemantico:
 
 
     def procesar_repeticion(self, nodo, nodo_anotado):
-    # hijo[0] = bloque
-    # hijo[1] = condición UNTIL
-
         bloque = self.anotar_nodo(nodo.hijos[0])
         nodo_anotado.agregar_hijo(bloque)
 
@@ -795,44 +694,32 @@ class AnalizadorSemantico:
         for hijo in nodo.hijos:
             if hijo.tipo == "id":
                 nombre_var = hijo.valor
-                # Capturar línea y columna del nodo hijo, o del nodo padre si no está disponible
-                linea = getattr(hijo, 'linea', None)
-                columna = getattr(hijo, 'columna', None)
-                
-                # Si el hijo no tiene posición, intentar con el nodo padre
-                if linea is None or linea == 0:
-                    linea = getattr(nodo, 'linea', 0)
-                if columna is None or columna == 0:
-                    columna = getattr(nodo, 'columna', 0)
-                
-                # Si aún no hay posición válida, usar valores por defecto
-                if linea is None:
-                    linea = 0
-                if columna is None:
-                    columna = 0
+                linea = getattr(hijo, 'linea', None) or getattr(nodo, 'linea', None)
+                columna = getattr(hijo, 'columna', None) or getattr(nodo, 'columna', None)
+
+                if linea == 0:
+                    linea = None
+                if columna == 0:
+                    columna = None
                 
                 simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
                 
                 if not simbolo:
-                    self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea, columna)
+                    linea_error = linea if linea else 0
+                    columna_error = columna if columna else 0
+                    self.report_error("VARIABLE_NO_DECLARADA", error_msg, linea_error, columna_error)
                 
                 id_anotado = NodoAnotado("id", nombre_var)
                 id_anotado.tipo_dato = simbolo.tipo if simbolo else "error"
-                id_anotado.linea = linea
-                id_anotado.columna = columna
+                id_anotado.linea = linea if linea else 0
+                id_anotado.columna = columna if columna else 0
                 nodo_anotado.agregar_hijo(id_anotado)
 
     def procesar_id(self, nodo, nodo_anotado):
         """Procesa un identificador (variable) en una expresión o asignación."""
         nombre_var = nodo.valor
-        
-        # Obtener la posición del nodo hijo (ID) o usar la del padre si no está disponible
-        # (Esto ya lo tienes, pero asegúrate de que 'linea' y 'columna' sean las del USO actual)
-        
         linea = getattr(nodo, 'linea', 0)
         columna = getattr(nodo, 'columna', 0)
-        
-        # ... (Tu lógica de ajuste de línea/columna si es necesario)
         
         simbolo, error_msg = self.tabla_simbolos.lookup(nombre_var, linea, columna)
         

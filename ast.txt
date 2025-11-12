@@ -77,26 +77,30 @@ programa
     asignacion
       numero
     seleccion
-      rel_op
-        numero
-        numero
-      lista_sentencias
-        asignacion
-          suma_op
-            id
-            numero
-      else
+      condicion
+        rel_op
+          numero
+          numero
+      bloque_if
+        lista_sentencias
+          asignacion
+            suma_op
+              id
+              numero
+      bloque_else
         lista_sentencias
           seleccion
-            log_op
-              rel_op
-                numero
-                numero
-              bool
-            lista_sentencias
-              asignacion
-                numero
-            else
+            condicion
+              log_op
+                rel_op
+                  numero
+                  numero
+                bool
+            bloque_if
+              lista_sentencias
+                asignacion
+                  numero
+            bloque_else
               lista_sentencias
                 asignacion
                   numero
@@ -117,37 +121,39 @@ programa
         numero
         numero
     repeticion
-      lista_sentencias
-        asignacion
-          suma_op
-            mult_op
-              suma_op
+      bloque_do
+        lista_sentencias
+          asignacion
+            suma_op
+              mult_op
+                suma_op
+                  id
+                  numero
+                numero
+              numero
+          iteracion
+            condicion
+              rel_op
                 id
                 numero
-              numero
-            numero
-        iteracion
-          condicion
-            rel_op
-              id
-              numero
-          lista_sentencias
-            asignacion
-              suma_op
-                numero
-                mult_op
-                  mult_op
-                    mult_op
-                      numero
-                      numero
+            bloque_while
+              lista_sentencias
+                asignacion
+                  suma_op
                     numero
-                  numero
-            sent_in
-              id
-            asignacion
-              mult_op
-                numero
-                numero
+                    mult_op
+                      mult_op
+                        mult_op
+                          numero
+                          numero
+                        numero
+                      numero
+                sent_in
+                  id
+                asignacion
+                  mult_op
+                    numero
+                    numero
       condicion
         rel_op
           id
@@ -157,9 +163,10 @@ programa
         rel_op
           id
           numero
-      lista_sentencias
-        sent_in
-          id
-        sent_out
-          salida
+      bloque_while
+        lista_sentencias
+          sent_in
             id
+          sent_out
+            salida
+              id
