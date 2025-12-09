@@ -447,8 +447,6 @@ class CompilerIDE(QMainWindow):
         self.tabs.addTab(self.sintactico_widget, "Sintáctico")
 
         self.tabs.addTab(QLabel("Inicializando Pestaña Semántico..."), "Semántico")
-        self.tabs.addTab(QLabel("Inicializando Pestaña Tabla de Simbolos..."), "Tabla de Simbolos")
-        
         self.tabs.addTab(QLabel("Código Intermedio Resultados"), "Código Intermedio")
 
         # Alinear labels de pestañas vacías
@@ -857,7 +855,7 @@ class CompilerIDE(QMainWindow):
         
         # Crear tabla
         self.tabla_simbolos_widget = QTableWidget()
-        self.tabla_simbolos_widget.setColumnCount(7)
+        self.tabla_simbolos_widget.setColumnCount(5)
         self.tabla_simbolos_widget.setHorizontalHeaderLabels([
             "Name", "Type", "Offset", "Count", "Lines"
         ])
