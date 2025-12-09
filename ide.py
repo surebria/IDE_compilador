@@ -346,15 +346,21 @@ class CompilerIDE(QMainWindow):
         semantico_menu.addSeparator()
         semantico_menu.addAction(ver_tabla_simbolos_action)
   
+        
         compilar_menu = menu_bar.addMenu("Compilar")
-        compilar_action = QAction("Compilar", self)
 
-        compilar_todo_action = QAction("Compilar Todo", self)
-        ver_codigo_intermedio_action = QAction("Ver Código Intermedio", self)
+        compilar_action = QAction("Compilar", self)
+        compilar_action.triggered.connect(lambda: self.ejecutar_codigo_intermedio(cambiar_pestaña=True))
+
         compilar_menu.addAction(compilar_action)
-        compilar_menu.addAction(compilar_todo_action)
-        compilar_menu.addSeparator()
-        compilar_menu.addAction(ver_codigo_intermedio_action)
+
+
+        # compilar_todo_action = QAction("Compilar Todo", self)
+        # ver_codigo_intermedio_action = QAction("Ver Código Intermedio", self)
+        # compilar_menu.addAction(compilar_action)
+        # compilar_menu.addAction(compilar_todo_action)
+        # compilar_menu.addSeparator()
+        # compilar_menu.addAction(ver_codigo_intermedio_action)
     
         ejecutar_menu = menu_bar.addMenu("Ejecutar")
         ejecutar_action = QAction("Ejecutar", self)
@@ -447,7 +453,12 @@ class CompilerIDE(QMainWindow):
         self.tabs.addTab(self.sintactico_widget, "Sintáctico")
 
         self.tabs.addTab(QLabel("Inicializando Pestaña Semántico..."), "Semántico")
-        self.tabs.addTab(QLabel("Código Intermedio Resultados"), "Código Intermedio")
+
+        # Pestaña de Código Intermedio (editor real)
+        self.codigo_intermedio = QTextEdit()
+        self.codigo_intermedio.setReadOnly(True)
+        self.tabs.addTab(self.codigo_intermedio, "Código Intermedio")
+
 
         # Alinear labels de pestañas vacías
         for i in range(self.tabs.count()):
@@ -919,6 +930,85 @@ class CompilerIDE(QMainWindow):
         return resultado
     
     #################################FIN MÉTODOS SEMÁNTICO############################
+
+    ################################# CODIGO INTERMEDIO ##########################################
+
+    def ejecutar_codigo_intermedio(self, cambiar_pestaña=False):
+        """Compila todo: análisis léxico, sintáctico, semántico y generación de código intermedio."""
+        
+        try:
+            # ---------------------------------------------------------
+            # 0. ANALISIS LÉXICO (asegura tokens.txt actualizado)
+            # ---------------------------------------------------------
+            if hasattr(self, "ejecutar_analisis_lexico"):
+                self.ejecutar_analisis_lexico()
+            else:
+                print("Advertencia: No existe ejecutar_analisis_lexico()")
+
+            # ---------------------------------------------------------
+            # 1. ANALISIS SINTÁCTICO
+            # ---------------------------------------------------------
+            ast, errores_sint = analizador_sintactico("tokens.txt")
+
+            if not ast:
+                self.status_label.setText("Error: No se puede compilar sin un AST válido")
+                if errores_sint:
+                    self.error_sintactico.setPlainText("\n".join(str(e) for e in errores_sint))
+                    self.errors_tabs.setCurrentWidget(self.error_sintactico)
+                return
+
+            # ---------------------------------------------------------
+            # 2. ANALISIS SEMÁNTICO
+            # ---------------------------------------------------------
+            try:
+                from analizador_semantico import ejecutar_analisis_semantico
+            except ImportError:
+                self.status_label.setText("Error: Falta 'analizador_semantico.py'")
+                return
+
+            ast_anotado, tabla_simbolos, errores_sem = ejecutar_analisis_semantico(ast)
+
+            if errores_sem:
+                self.status_label.setText("Errores semánticos: compilación detenida")
+                self.error_semantico.setPlainText("\n".join(str(e) for e in errores_sem))
+                self.errors_tabs.setCurrentWidget(self.error_semantico)
+                return
+
+            # ---------------------------------------------------------
+            # 3. GENERAR CÓDIGO INTERMEDIO (IR)
+            # ---------------------------------------------------------
+            try:
+                from generador_codigo_intermedio import CodigoIntermedioGenerator
+
+                gen = CodigoIntermedioGenerator()
+                codigo_ir = gen.generar(ast_anotado)   # devuelve lista de strings "(op, a1, a2, res)"
+
+                # mostrar en UI
+                self.codigo_intermedio.setPlainText("\n".join(codigo_ir))
+
+            except ImportError:
+                self.status_label.setText("Error: Falta 'generador_codigo_intermedio.py'")
+                return
+
+
+            # ---------------------------------------------------------
+            # 4. MOSTRAR RESULTADOS EN LA UI
+            # ---------------------------------------------------------
+            self.codigo_intermedio.setPlainText("\n".join(codigo_ir))
+
+            if cambiar_pestaña:
+                self.tabs.setCurrentWidget(self.codigo_intermedio_tab)
+
+            self.status_label.setText("Compilación completa: Código intermedio generado")
+
+        except Exception as e:
+            print("Error en compilación:", e)
+            import traceback
+            traceback.print_exc()
+            self.status_label.setText("Error inesperado durante la compilación")
+
+#################################### FIN CODIGO INTERMEDIO #######################################
+
 
     def close_file(self):
         self.setCentralWidget(QWidget())

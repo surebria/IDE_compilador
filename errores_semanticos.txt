@@ -1,6 +1,1 @@
-VARIABLE_NO_DECLARADA: Variable 'suma' no declarada (Línea 4, Columna 5)
-TIPO_INCOMPATIBLE: No puedes asignar un float (32.32) a una variable int (Línea 5, Columna 5)
-TIPO_INCOMPATIBLE: No puedes asignar un float (14.54) a una variable int (Línea 14, Columna 5)
-TIPO_INCOMPATIBLE: No puedes asignar un float (64.0) a una variable int (Línea 16, Columna 9)
-VARIABLE_NO_DECLARADA: Variable 'mas' no declarada (Línea 33, Columna 13)
-VARIABLE_NO_DECLARADA: Variable 'mas' no declarada (Línea 37, Columna 16)
+No se encontraron errores semánticos
