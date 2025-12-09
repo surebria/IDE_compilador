@@ -17,8 +17,6 @@ programa
     asignacion
       numero
     asignacion
-      numero
-    asignacion
       suma_op
         suma_op
           numero
@@ -150,10 +148,6 @@ programa
                       numero
                 sent_in
                   id
-                asignacion
-                  mult_op
-                    numero
-                    numero
       condicion
         rel_op
           id
@@ -165,8 +159,6 @@ programa
           numero
       bloque_while
         lista_sentencias
-          sent_in
-            id
           sent_out
             salida
               id

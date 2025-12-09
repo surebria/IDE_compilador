@@ -6,6 +6,7 @@ import os
 
 
 class HighlightSyntax(QSyntaxHighlighter):
+    
     def __init__(self, document):
         super().__init__(document)
         self.highlightingRules = []
@@ -961,6 +962,7 @@ class AnalizadorSintactico:
 
 
     def factor(self):
+        
         """factor → componente { '^' componente }"""
         print("Analizando factor...")
 
@@ -1391,6 +1393,9 @@ class AnalizadorSintactico:
                 return None, self.errores
             
             self.ast = self.programa()
+            print("AST generado:")
+            print(self.ast)
+                        
 
             # print("\n=== ÁRBOL SINTÁCTICO CON POSICIONES ===")
             # if self.ast:

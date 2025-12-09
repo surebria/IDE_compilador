@@ -10,6 +10,8 @@ programa
       id: a | Tipo: float
       id: b | Tipo: float
       id: c | Tipo: float
+    asignacion: x | Tipo: int | Valor: 2
+      numero: 2 | Tipo: int | Valor: 2
     asignacion: x | Tipo: int | Valor: 23
       numero: 23 | Tipo: int | Valor: 23
     asignacion: y | Tipo: int | Valor: 4
@@ -77,9 +79,9 @@ programa
           numero: 3 | Tipo: int | Valor: 3
       bloque_if
         lista_sentencias
-          asignacion: y | Tipo: int | Valor: 11
-            suma_op: + | Tipo: int | Valor: 11
-              id: x | Tipo: int | Valor: 8
+          asignacion: y | Tipo: int | Valor: 67
+            suma_op: + | Tipo: int | Valor: 67
+              id: z | Tipo: int | Valor: 64
               numero: 3 | Tipo: int | Valor: 3
       bloque_else: else
         lista_sentencias
@@ -98,9 +100,9 @@ programa
               lista_sentencias
                 asignacion: b | Tipo: float | Valor: 5.0
                   numero: 5.0 | Tipo: float | Valor: 5.0
-          asignacion: y | Tipo: int | Valor: 12
-            suma_op: + | Tipo: int | Valor: 12
-              id: y | Tipo: int | Valor: 11
+          asignacion: y | Tipo: int | Valor: 68
+            suma_op: + | Tipo: int | Valor: 68
+              id: y | Tipo: int | Valor: 67
               numero: 1 | Tipo: int | Valor: 1
     asignacion: a | Tipo: float | Valor: 1
       expresion_simple: + | Tipo: int | Valor: 1
@@ -117,11 +119,11 @@ programa
     repeticion: do
       bloque_do
         lista_sentencias
-          asignacion: y | Tipo: int | Valor: 27
-            suma_op: + | Tipo: int | Valor: 27
-              mult_op: * | Tipo: int | Valor: 26
-                suma_op: + | Tipo: int | Valor: 13
-                  id: y | Tipo: int | Valor: 12
+          asignacion: y | Tipo: int | Valor: 139
+            suma_op: + | Tipo: int | Valor: 139
+              mult_op: * | Tipo: int | Valor: 138
+                suma_op: + | Tipo: int | Valor: 69
+                  id: y | Tipo: int | Valor: 68
                   numero: 1 | Tipo: int | Valor: 1
                 numero: 2 | Tipo: int | Valor: 2
               numero: 1 | Tipo: int | Valor: 1
@@ -142,14 +144,16 @@ programa
                           numero: 9 | Tipo: int | Valor: 9
                         numero: 8 | Tipo: int | Valor: 8
                       numero: 3 | Tipo: int | Valor: 3
+                sent_in: cin
+                  id: x | Tipo: int
       condicion: until | Tipo: bool | Valor: False
         rel_op: == | Tipo: bool | Valor: False
-          id: y | Tipo: int | Valor: 27
+          id: y | Tipo: int | Valor: 139
           numero: 5 | Tipo: int | Valor: 5
     iteracion: while
       condicion | Tipo: bool | Valor: False
         rel_op: == | Tipo: bool | Valor: False
-          id: y | Tipo: int | Valor: 27
+          id: y | Tipo: int | Valor: 139
           numero: 0 | Tipo: int | Valor: 0
       bloque_while
         lista_sentencias

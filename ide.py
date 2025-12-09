@@ -35,7 +35,7 @@ class CodeEditor(QPlainTextEdit):
         
         self.highlighter = HighlightSyntax(self.document())
         
-        
+
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
         self.cursorPositionChanged.connect(self.highlight_current_line)
@@ -997,7 +997,7 @@ class CompilerIDE(QMainWindow):
             self.codigo_intermedio.setPlainText("\n".join(codigo_ir))
 
             if cambiar_pestaña:
-                self.tabs.setCurrentWidget(self.codigo_intermedio_tab)
+                self.tabs.setCurrentWidget(self.codigo_intermedio)
 
             self.status_label.setText("Compilación completa: Código intermedio generado")
 
