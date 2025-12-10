@@ -10,6 +10,7 @@ import os
 
 
 from logic import analizador_sintactico, mostrar_ast_texto
+from interprete import InterpreteCI
 from PyQt6.QtGui import QFont
 from logic import HighlightSyntax
 from logic import analizador_lexico
@@ -362,12 +363,15 @@ class CompilerIDE(QMainWindow):
         # compilar_menu.addSeparator()
         # compilar_menu.addAction(ver_codigo_intermedio_action)
     
+       
         ejecutar_menu = menu_bar.addMenu("Ejecutar")
+
         ejecutar_action = QAction("Ejecutar", self)
-        ejecutar_paso_a_paso_action = QAction("Ejecutar Paso a Paso", self)
+        ejecutar_action.triggered.connect(self.ejecutar_programa)
+
         ejecutar_menu.addAction(ejecutar_action)
-        ejecutar_menu.addSeparator()
-        ejecutar_menu.addAction(ejecutar_paso_a_paso_action)
+
+       
         
         self.toolbar = QToolBar("Barra de Herramientas")
         self.toolbar.setStyleSheet("QToolBar { background-color: #e0e0e0; border: 1px solid #cccccc; spacing: 3px; }")
@@ -484,7 +488,11 @@ class CompilerIDE(QMainWindow):
         self.error_semantico.setReadOnly(True)
         self.errors_tabs.addTab(self.error_semantico, "Errores Semánticos") # Añadido correctamente
 
-        self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
+        # self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
+        self.resultados_widget = QTextEdit()
+        self.resultados_widget.setReadOnly(False)
+        self.errors_tabs.addTab(self.resultados_widget, "Resultados")
+
         
         # Alinear labels de pestañas vacías
         for i in range(self.errors_tabs.count()):
@@ -1008,6 +1016,81 @@ class CompilerIDE(QMainWindow):
             self.status_label.setText("Error inesperado durante la compilación")
 
 #################################### FIN CODIGO INTERMEDIO #######################################
+
+################################### EJECUTAR ##########################################
+
+    def ejecutar_programa(self):
+        """Ejecuta el código intermedio ya generado y mostrado en la interfaz."""
+        try:
+            # 1. Obtener el código intermedio generado
+            texto_ir = self.codigo_intermedio.toPlainText().strip()
+
+            if not texto_ir:
+                self.resultados_widget.setText(
+                    "❌ No hay código intermedio para ejecutar.\n"
+                    "Primero compile el programa con 'Compilar → Código Intermedio'"
+                )
+                index = self.errors_tabs.indexOf(self.resultados_widget)
+                self.errors_tabs.setCurrentIndex(index)
+                return
+
+            # Convertir líneas "(op, a1, a2, res)" a tuplas reales
+            cuadruplas = []
+            for line in texto_ir.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Quitar paréntesis
+                line = line.replace("(", "").replace(")", "")
+
+                partes = [p.strip() for p in line.split(",")]
+
+                # Asegurar siempre 4 elementos
+                while len(partes) < 4:
+                    partes.append("")
+
+                op, a1, a2, a3 = partes[:4]
+
+                # Limpiar espacios
+                op = op.strip()
+                a1 = a1.strip()
+                a2 = a2.strip()
+                a3 = a3.strip()
+
+                cuadruplas.append((op, a1, a2, a3))
+
+            # 2. Ejecutar código
+            interprete = InterpreteCI()
+            resultado = interprete.ejecutar(
+                cuadruplas=cuadruplas,
+                entrada=[],        # valores para READ()
+                max_steps=10000
+            )
+
+            # 3. Mostrar resultados
+            salida = resultado.get("salida", "")
+            memoria = resultado.get("memoria", {})
+
+            texto = "📌 RESULTADOS DE LA EJECUCIÓN\n\n"
+            texto += "Salida del programa:\n"
+            texto += (salida if salida else "(sin salida)") + "\n\n"
+
+            texto += "Memoria final:\n"
+            if memoria:
+                for k, v in memoria.items():
+                    texto += f"   {k} = {v}\n"
+            else:
+                texto += "   (vacía)\n"
+
+            self.resultados_widget.setText(texto)
+            index = self.errors_tabs.indexOf(self.resultados_widget)
+            self.errors_tabs.setCurrentIndex(index)
+
+        except Exception as e:
+            self.resultados_widget.setText(f"❌ Error durante la ejecución:\n{str(e)}")
+            index = self.errors_tabs.indexOf(self.resultados_widget)
+            self.errors_tabs.setCurrentIndex(index)
 
 
     def close_file(self):

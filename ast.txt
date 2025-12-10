@@ -6,9 +6,7 @@ programa
         id
         id
         id
-    declaracion_variable
-      tipo
-      identificador
+        id
         id
         id
         id
@@ -17,148 +15,25 @@ programa
     asignacion
       numero
     asignacion
-      suma_op
-        suma_op
-          numero
-          numero
-        numero
+      numero
     asignacion
-      suma_op
-        id
-        numero
+      numero
     asignacion
-      suma_op
-        id
-        numero
+      numero
+    asignacion
+      numero
     asignacion
       suma_op
         suma_op
-          suma_op
-            suma_op
-              numero
-              numero
-            mult_op
-              mult_op
-                numero
-                numero
-              numero
-          numero
-        numero
-    asignacion
-      mult_op
-        suma_op
-          numero
-          numero
-        mult_op
-          numero
-          numero
-    asignacion
-      suma_op
-        suma_op
-          suma_op
-            numero
-            numero
+          id
           mult_op
-            mult_op
-              numero
-              numero
-            numero
-        numero
-    asignacion
-      suma_op
+            id
+            id
         mult_op
-          numero
-          numero
-        mult_op
-          numero
-          numero
-    asignacion
-      numero
-    seleccion
-      condicion
-        rel_op
-          numero
-          numero
-      bloque_if
-        lista_sentencias
-          asignacion
-            suma_op
-              id
-              numero
-      bloque_else
-        lista_sentencias
-          seleccion
-            condicion
-              log_op
-                rel_op
-                  numero
-                  numero
-                bool
-            bloque_if
-              lista_sentencias
-                asignacion
-                  numero
-            bloque_else
-              lista_sentencias
-                asignacion
-                  numero
-          asignacion
-            suma_op
-              id
-              numero
-    asignacion
-      expresion_simple
-        id
-        numero
-    asignacion
-      expresion_simple
-        id
-        numero
-    asignacion
-      suma_op
-        numero
-        numero
-    repeticion
-      bloque_do
-        lista_sentencias
-          asignacion
-            suma_op
-              mult_op
-                suma_op
-                  id
-                  numero
-                numero
-              numero
-          iteracion
-            condicion
-              rel_op
-                id
-                numero
-            bloque_while
-              lista_sentencias
-                asignacion
-                  suma_op
-                    numero
-                    mult_op
-                      mult_op
-                        mult_op
-                          numero
-                          numero
-                        numero
-                      numero
-                sent_in
-                  id
-      condicion
-        rel_op
+          suma_op
+            id
+            id
           id
-          numero
-    iteracion
-      condicion
-        rel_op
-          id
-          numero
-      bloque_while
-        lista_sentencias
-          sent_out
-            salida
-              id
+    sent_out
+      salida
+        id

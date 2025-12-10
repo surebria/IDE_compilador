@@ -23,14 +23,16 @@ programa
       numero: 1 | Tipo: int | Valor: 1
     asignacion: x | Tipo: int | Valor: 36
       suma_op: + | Tipo: int | Valor: 36
-        unario: - | Tipo: int | Valor: 34
-          suma_op: + | Tipo: int | Valor: 34
-            id: a | Tipo: int | Valor: 4
-            mult_op: * | Tipo: int | Valor: 30
-              id: b | Tipo: int | Valor: 5
-              id: c | Tipo: int | Valor: 6
+        suma_op: + | Tipo: int | Valor: 34
+          id: a | Tipo: int | Valor: 4
+          mult_op: * | Tipo: int | Valor: 30
+            id: b | Tipo: int | Valor: 5
+            id: c | Tipo: int | Valor: 6
         mult_op: / | Tipo: int | Valor: 2
           suma_op: - | Tipo: int | Valor: 2
             id: d | Tipo: int | Valor: 7
             id: e | Tipo: int | Valor: 5
           id: f | Tipo: int | Valor: 1
+    sent_out: cout
+      salida | Tipo: int | Valor: 36
+        id: x | Tipo: int | Valor: 36
