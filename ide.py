@@ -1070,18 +1070,22 @@ class CompilerIDE(QMainWindow):
 
             # 3. Mostrar resultados
             salida = resultado.get("salida", "")
-            memoria = resultado.get("memoria", {})
+            # memoria = resultado.get("memoria", {})
 
-            texto = "📌 RESULTADOS DE LA EJECUCIÓN\n\n"
-            texto += "Salida del programa:\n"
-            texto += (salida if salida else "(sin salida)") + "\n\n"
-
-            texto += "Memoria final:\n"
-            if memoria:
-                for k, v in memoria.items():
-                    texto += f"   {k} = {v}\n"
+            texto = ""
+            # texto += "Salida del programa:\n\n"
+            if salida:
+                texto += " ".join(str(x) for x in salida) + "\n\n"
             else:
-                texto += "   (vacía)\n"
+                texto += "   (sin salida)\n\n"
+
+
+            # texto += "Memoria final:\n"
+            # if memoria:
+            #     for k, v in memoria.items():
+            #         texto += f"   {k} = {v}\n"
+            # else:
+            #     texto += "   (vacía)\n"
 
             self.resultados_widget.setText(texto)
             index = self.errors_tabs.indexOf(self.resultados_widget)

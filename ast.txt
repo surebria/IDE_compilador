@@ -6,34 +6,14 @@ programa
         id
         id
         id
-        id
-        id
-        id
-        id
-    asignacion
-      numero
-    asignacion
-      numero
-    asignacion
-      numero
-    asignacion
-      numero
     asignacion
       numero
     asignacion
       numero
     asignacion
       suma_op
-        suma_op
-          id
-          mult_op
-            id
-            id
-        mult_op
-          suma_op
-            id
-            id
-          id
+        id
+        id
     sent_out
       salida
         id
