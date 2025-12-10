@@ -1,0 +1,40 @@
+main {
+    int categoria;
+    float sueldo, aumento, nuevo_sueldo;
+    int es_valida;
+
+    cin >> categoria;
+    cin >> sueldo;
+
+    aumento = 0.0; 
+    es_valida = 0;
+
+    if categoria == 1 then
+        aumento = sueldo * 0.15;
+        es_valida = 1;
+    else 
+        if categoria == 2 then
+            aumento = sueldo * 0.10;
+            es_valida = 1;
+        else 
+            if categoria == 3 then
+                aumento = sueldo * 0.08;
+                es_valida = 1;
+            else 
+                if categoria == 4 then
+                    aumento = sueldo * 0.07;
+                    es_valida = 1;
+                else
+                    aumento = 0.0; 
+                end
+            end
+        end
+    end
+
+    nuevo_sueldo = sueldo + aumento;
+
+    if es_valida == 1 then
+        cout << categoria; 
+        cout << nuevo_sueldo;
+    end
+}

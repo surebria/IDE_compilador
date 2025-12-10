@@ -1,0 +1,87 @@
+// Ejercicio 5: Venta de Boletos y Recaudacion (Repetitivo - while)
+
+main {
+    // Precios de las 5 localidades
+    float P1, P2, P3, P4, P5;
+    
+    // Contadores de boletos vendidos por tipo
+    int total_ventas_1, total_ventas_2, total_ventas_3, total_ventas_4, total_ventas_5;
+
+    // Variables de venta
+    int CLAVE, CANT;
+    float importe_venta, recaudacion_total;
+
+    // --- Lectura de Precios ---
+    // El usuario debe ingresar P1, P2, P3, P4, P5 en orden, CADA UNO EN SU PROPIA LÍNEA
+    cin >> P1;
+    cin >> P2;
+    cin >> P3;
+    cin >> P4;
+    cin >> P5;
+    
+    // Inicializacion
+    total_ventas_1 = 0;
+    total_ventas_2 = 0;
+    total_ventas_3 = 0;
+    total_ventas_4 = 0;
+    total_ventas_5 = 0;
+    recaudacion_total = 0.0;
+    
+    // --- Lectura de Ventas ---
+    // Lectura de la primera CLAVE para iniciar el bucle
+    cin >> CLAVE;
+
+    // Bucle para procesar ventas.
+    while CLAVE != 0
+        // Leer cantidad solo si la clave es valida
+        if (CLAVE >= 1) && (CLAVE <= 5) then
+            cin >> CANT; // Lectura de la Cantidad (separada)
+            
+            importe_venta = 0.0;
+            
+            // Calculo de Importe y Actualizacion de Totales
+            if CLAVE == 1 then
+                importe_venta = P1 * CANT;
+                total_ventas_1 = total_ventas_1 + CANT;
+            else 
+                if CLAVE == 2 then
+                    importe_venta = P2 * CANT;
+                    total_ventas_2 = total_ventas_2 + CANT;
+                else 
+                    if CLAVE == 3 then
+                        importe_venta = P3 * CANT;
+                        total_ventas_3 = total_ventas_3 + CANT;
+                    else 
+                        if CLAVE == 4 then
+                            importe_venta = P4 * CANT;
+                            total_ventas_4 = total_ventas_4 + CANT;
+                        else // CLAVE == 5
+                            importe_venta = P5 * CANT;
+                            total_ventas_5 = total_ventas_5 + CANT;
+                        end
+                    end
+                end
+            end
+
+            recaudacion_total = recaudacion_total + importe_venta;
+
+            // Imprimir detalles de la venta: Clave, Cantidad, Importe Total
+            cout << CLAVE;
+            cout << CANT;
+            cout << importe_venta;
+            
+        end // Cierre de IF (CLAVE válida)
+        
+        // Leer la siguiente clave para la condicion del bucle
+        cin >> CLAVE;
+    end
+
+    // --- Reporte Final ---
+    // Imprime la cantidad de boletos vendidos de cada tipo y la recaudación total
+    cout << total_ventas_1; 
+    cout << total_ventas_2; 
+    cout << total_ventas_3; 
+    cout << total_ventas_4; 
+    cout << total_ventas_5; 
+    cout << recaudacion_total;
+}

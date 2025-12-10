@@ -1,10 +1,15 @@
 from PyQt6.QtWidgets import (
-    QApplication, QDialog, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
+    QApplication, QDialog, QMainWindow, QLineEdit, QMessageBox,  QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
     QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar, QTreeWidget,
     QTreeWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView # Se agregaron estas importaciones
 )
 from PyQt6.QtGui import QAction, QColor, QPainter, QTextFormat, QFontMetrics, QIcon
 from PyQt6.QtCore import QRect, Qt, QSize, pyqtSlot
+from PyQt6.QtCore import QEventLoop
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, 
+                               QLineEdit, QPushButton, QHBoxLayout)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QEventLoop, QTimer
+from PyQt6.QtGui import QTextCursor, QFont
 import sys
 import os
 
@@ -16,37 +21,133 @@ from logic import HighlightSyntax
 from logic import analizador_lexico
 
 
-class ConsolaRead(QDialog):
-    def __init__(self):
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, 
+                               QLineEdit, QPushButton, QHBoxLayout, QApplication)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QEventLoop
+from PyQt6.QtGui import QFont
+
+
+class ConsolaEjecucion(QDialog):
+    """Consola interactiva para la ejecución de programas."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("🖥️ Consola del Programa")
+        self.resize(700, 500)
+        
+        self.esperando_input = False
+        self.valor_input = None
+        self.input_loop = None
+        
+        layout = QVBoxLayout(self)
+        
+        # Área de salida
+        self.salida = QTextEdit()
+        self.salida.setReadOnly(True)
+        self.salida.setFont(QFont("Consolas", 10))
+        self.salida.setStyleSheet("""
+            QTextEdit {
+                background-color: #1e1e1e;
+                color: #00ff00;
+                border: 2px solid #444;
+                padding: 10px;
+            }
+        """)
+        layout.addWidget(self.salida)
+        
+        # Campo de entrada
+        self.entrada = QLineEdit()
+        self.entrada.setPlaceholderText("Ingrese un valor y presione Enter...")
+        self.entrada.setEnabled(False)
+        self.entrada.returnPressed.connect(self._procesar_input)
+        layout.addWidget(self.entrada)
+        
+        # Botón de cerrar
+        self.btn_cerrar = QPushButton("Cerrar")
+        self.btn_cerrar.clicked.connect(self.accept)
+        self.btn_cerrar.setVisible(False)
+        layout.addWidget(self.btn_cerrar)
+    
+    def escribir(self, texto):
+        """Muestra texto en la consola."""
+        self.salida.append(str(texto))
+        QApplication.processEvents()  # Actualizar UI inmediatamente
+    
+    def pedir_input(self, prompt="Ingrese valor: "):
+        """Solicita entrada al usuario."""
+        self.escribir(f"\n{prompt}")
+        
+        self.esperando_input = True
+        self.valor_input = None
+        self.entrada.setEnabled(True)
+        self.entrada.setFocus()
+        self.entrada.clear()
+        
+        # Esperar con event loop
+        self.input_loop = QEventLoop()
+        self.input_loop.exec()
+        
+        self.entrada.setEnabled(False)
+        self.esperando_input = False
+        
+        return self.valor_input
+    
+    def _procesar_input(self):
+        """Procesa el valor ingresado."""
+        if not self.esperando_input:
+            return
+        
+        valor = self.entrada.text().strip()
+        self.escribir(f">>> {valor}")
+        
+        self.valor_input = valor
+        self.entrada.clear()
+        
+        if self.input_loop:
+            self.input_loop.quit()
+    
+    def programa_terminado(self):
+        """Muestra que el programa terminó."""
+        self.escribir("\n" + "="*50)
+        self.escribir("✓ PROGRAMA TERMINADO")
+        self.escribir("="*50)
+        self.btn_cerrar.setVisible(True)
+    
+    def closeEvent(self, event):
+        """Maneja el cierre de la ventana."""
+        if self.esperando_input and self.input_loop:
+            self.valor_input = "0"
+            self.input_loop.quit()
+        event.accept()
+
+
+# ============================================================
+#           HILO PARA EJECUTAR EL INTÉRPRETE
+# ============================================================
+
+class HiloEjecucion(QThread):
+    """Ejecuta el intérprete en un hilo separado."""
+    
+    terminado = pyqtSignal(dict)
+    error = pyqtSignal(str)
+    
+    def __init__(self, interprete, cuadruplas):
         super().__init__()
-        self.setWindowTitle("Consola de Entrada (READ)")
-        self.resize(420, 300)
-
-        self.valores = []
-
-        layout = QVBoxLayout()
-
-        self.label = QLabel("Ingrese los valores para READ (uno por línea):")
-        layout.addWidget(self.label)
-
-        self.texto = QTextEdit()
-        self.texto.setPlaceholderText("Escribe valores aquí…\nEjemplo:\n5\n10\nhola")
-        layout.addWidget(self.texto)
-
-        self.btn = QPushButton("Aceptar")
-        self.btn.clicked.connect(self.accept)
-        layout.addWidget(self.btn)
-
-        self.setLayout(layout)
-
-    def obtener_valores(self):
-        """Devuelve los valores ingresados como lista"""
-        if self.exec() == QDialog.DialogCode.Accepted:
-            txt = self.texto.toPlainText().strip()
-            if not txt:
-                return []
-            return [x.strip() for x in txt.split("\n")]
-        return []
+        self.interprete = interprete
+        self.cuadruplas = cuadruplas
+    
+    def run(self):
+        """Ejecuta el intérprete."""
+        try:
+            resultado = self.interprete.ejecutar(
+                cuadruplas=self.cuadruplas,
+                max_steps=10000000
+            )
+            self.terminado.emit(resultado)
+        except Exception as e:
+            import traceback
+            error_completo = f"{str(e)}\n\n{traceback.format_exc()}"
+            self.error.emit(error_completo)
 
 
 class LineNumberArea(QWidget):
@@ -403,7 +504,6 @@ class CompilerIDE(QMainWindow):
         ejecutar_action.triggered.connect(self.ejecutar_programa)
 
         ejecutar_menu.addAction(ejecutar_action)
-
        
         
         self.toolbar = QToolBar("Barra de Herramientas")
@@ -522,9 +622,9 @@ class CompilerIDE(QMainWindow):
         self.errors_tabs.addTab(self.error_semantico, "Errores Semánticos") # Añadido correctamente
 
         # self.errors_tabs.addTab(QLabel("Resultados"), "Resultados")
-        self.resultados_widget = QTextEdit()
-        self.resultados_widget.setReadOnly(False)
-        self.errors_tabs.addTab(self.resultados_widget, "Resultados")
+        # self.resultados_widget = QTextEdit()
+        # self.resultados_widget.setReadOnly(False)
+        # self.errors_tabs.addTab(self.resultados_widget, "Resultados")
 
         
         # Alinear labels de pestañas vacías
@@ -1053,19 +1153,18 @@ class CompilerIDE(QMainWindow):
 ################################### EJECUTAR ##########################################
 
     def ejecutar_programa(self):
-        """Ejecuta el código intermedio ya generado y mostrado en la interfaz."""
+        """Ejecuta el código intermedio usando una consola real."""
         try:
+            from interprete import InterpreteCI
+            
             texto_ir = self.codigo_intermedio.toPlainText().strip()
 
             if not texto_ir:
-                self.resultados_widget.setText(
-                    "❌ No hay código intermedio para ejecutar.\n"
-                    "Primero compile el programa con 'Compilar → Código Intermedio'"
-                )
-                index = self.errors_tabs.indexOf(self.resultados_widget)
-                self.errors_tabs.setCurrentIndex(index)
+                QMessageBox.warning(self, "Sin código", 
+                    "❌ No hay código intermedio para ejecutar.")
                 return
 
+            # Procesar cuádruplas
             cuadruplas = []
             for line in texto_ir.split("\n"):
                 line = line.strip()
@@ -1076,38 +1175,53 @@ class CompilerIDE(QMainWindow):
                 partes = [p.strip() for p in line.split(",")]
 
                 while len(partes) < 4:
-                    partes.append("")
+                    partes.append(None)
 
                 op, a1, a2, a3 = partes[:4]
+                
+                # Convertir "_" a None
+                if a1 == "_": a1 = None
+                if a2 == "_": a2 = None
+                if a3 == "_": a3 = None
+                
                 cuadruplas.append((op, a1, a2, a3))
 
-            # ---- CONSOLA PARA READ ----
-            consola = ConsolaRead()
-            lista_inputs = consola.obtener_valores()
-
+            # Crear consola
+            consola = ConsolaEjecucion(self)
+            consola.show()
+            
+            # Crear intérprete
             interprete = InterpreteCI()
-            resultado = interprete.ejecutar(
-                cuadruplas=cuadruplas,
-                entrada=lista_inputs,
-                max_steps=10000
-            )
-
-            salida = resultado.get("salida", "")
-
-            texto = ""
-            if salida:
-                texto += " ".join(str(x) for x in salida) + "\n\n"
-            else:
-                texto += "   (sin salida)\n\n"
-
-            self.resultados_widget.setText(texto)
-            index = self.errors_tabs.indexOf(self.resultados_widget)
-            self.errors_tabs.setCurrentIndex(index)
+            interprete.consola = consola
+            
+            # Crear hilo
+            hilo = HiloEjecucion(interprete, cuadruplas)
+            
+            # Conectar señales
+            def on_terminado(resultado):
+                # consola.escribir(f"\n✓ Pasos: {resultado['steps']}")
+                consola.programa_terminado()
+            
+            def on_error(error_msg):
+                consola.escribir(f"\n❌ ERROR:\n{error_msg}")
+                consola.programa_terminado()
+            
+            hilo.terminado.connect(on_terminado)
+            hilo.error.connect(on_error)
+            
+            # Iniciar
+            consola.escribir("="*50)
+            consola.escribir("🚀 EJECUTANDO PROGRAMA")
+            consola.escribir("="*50 + "\n")
+            
+            hilo.start()
+            
+            # Guardar referencias
+            self.consola_activa = consola
+            self.hilo_activo = hilo
 
         except Exception as e:
-            self.resultados_widget.setText(f"❌ Error durante la ejecución:\n{str(e)}")
-            index = self.errors_tabs.indexOf(self.resultados_widget)
-            self.errors_tabs.setCurrentIndex(index)
+            QMessageBox.critical(self, "Error", f"❌ Error: {str(e)}")
 
 
 

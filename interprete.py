@@ -13,6 +13,7 @@ class InterpreteCI:
         self.salida = []   # Buffer de salida para print/write
         self.entrada_buffer = []  # Buffer de entrada para read
         self.ejecutando = False
+        self.consola = None
         
     def cargar_cuadruplas(self, cuadruplas):
         """Carga las cuádruplas y construye la tabla de etiquetas.
@@ -273,7 +274,9 @@ class InterpreteCI:
         if not self.entrada_buffer:
             # Si no hay entrada, solicitar al usuario
             try:
-                valor = input(f"Ingrese valor para {variable}: ")
+                # valor = input(f"Ingrese valor para {variable}: ")
+                valor = self.consola.pedir_input()
+
             except EOFError:
                 valor = 0
         else:
@@ -290,11 +293,15 @@ class InterpreteCI:
 
     
     def _ejecutar_write(self, addr):
-        """Escribe un valor a la salida"""
         valor = self._obtener_valor(addr)
-        self.salida.append(valor)
-        print(valor)  # También imprimir en consola
+
+        if self.consola:
+            self.consola.escribir(valor)
+        else:
+            print(valor)
+
         self.pc += 1
+
     
     def imprimir_estado(self):
         """Imprime el estado actual del intérprete (útil para debugging)."""

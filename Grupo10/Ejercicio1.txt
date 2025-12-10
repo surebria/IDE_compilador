@@ -1,0 +1,16 @@
+main {
+    // Declaracion de variables
+    float base, altura, perimetro, area;
+
+    // Entrada de datos: Lecturas individuales
+    cin >> base;
+    cin >> altura;
+
+    // Calculos
+    perimetro = 2 * (base + altura);
+    area = base * altura;
+
+    // Salida de resultados
+    cout << perimetro; 
+    cout << area;      
+}

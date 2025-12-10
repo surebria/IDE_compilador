@@ -1,0 +1,26 @@
+// Ejercicio 4: Imprimir todos los números perfectos <= N
+
+main {
+    int N, numero, divisor, suma_divisores;
+
+    cin >> N;   // leer límite
+    numero = 2;
+
+    while numero <= N
+        suma_divisores = 0;
+        divisor = 1;
+
+        while divisor <= (numero / 2)
+            if (numero % divisor) == 0 then
+                suma_divisores = suma_divisores + divisor;
+            end
+            divisor++;
+        end
+
+        if suma_divisores == numero then
+            cout << numero;
+        end
+
+        numero++;
+    end
+}
