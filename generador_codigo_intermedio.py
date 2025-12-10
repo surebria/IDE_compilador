@@ -140,32 +140,64 @@ class CodigoIntermedioGenerator:
         if tipo in ("sent_out", "cout", "OUTPUT"):
             return self._cout(nodo)
 
-        # Expresiones
-        if tipo in ("suma_op", "SUMA", "suma", "expresion_simple"):
-            return self._suma(nodo)
+        # Expresiones unarias (negación, not)
+        if tipo in ("negacion", "neg", "unario", "menos_unario", "-u", "operador_unario"):
+            return self._negacion(nodo)
 
-        if tipo in ("mult_op", "MULT", "mult"):
-            return self._mult(nodo)
+        # Expresiones aritméticas
+        if tipo in ("suma_op", "SUMA", "suma", "expresion_simple", "expresion_aditiva", 
+                    "termino", "expresion", "exp", "exp_simple"):
+            # Si tiene operador, es una operación binaria
+            if valor in ("+", "-") and len(hijos) >= 2:
+                return self._suma(nodo)
+            # Si solo tiene un hijo, delegar
+            elif len(hijos) == 1:
+                return self._recorrer(hijos[0])
+            # Si tiene 2+ hijos sin operador explícito, asumir suma
+            elif len(hijos) >= 2:
+                return self._suma(nodo)
+            return None
 
-        if tipo in ("rel_op", "REL", "relacional"):
+        if tipo in ("mult_op", "MULT", "mult", "factor", "expresion_multiplicativa", "term"):
+            # Si tiene operador, es una operación binaria
+            if valor in ("*", "/", "%") and len(hijos) >= 2:
+                return self._mult(nodo)
+            # Si solo tiene un hijo, delegar
+            elif len(hijos) == 1:
+                return self._recorrer(hijos[0])
+            # Si tiene 2+ hijos sin operador explícito, asumir multiplicación
+            elif len(hijos) >= 2:
+                return self._mult(nodo)
+            return None
+
+        # Expresiones relacionales y lógicas
+        if tipo in ("rel_op", "REL", "relacional", "comparacion"):
             return self._rel(nodo)
 
-        if tipo == "log_op":
+        if tipo in ("log_op", "AND", "OR", "logico"):
             return self._log(nodo)
 
-        if tipo in ("numero", "NUM", "FLOAT"):
+        # Literales e identificadores
+        if tipo in ("numero", "NUM", "FLOAT", "INT", "entero", "flotante"):
             return str(valor)
 
-        if tipo in ("id", "ID", "identificador"):
+        if tipo in ("id", "ID", "identificador", "variable"):
             return str(valor)
 
-        # Por defecto, recorrer hijos
+        # Expresión entre paréntesis - procesar el contenido
+        if tipo in ("expresion_paren", "parentesis", "paren"):
+            if hijos:
+                return self._recorrer(hijos[0])
+            return None
+
+        # Por defecto, recorrer hijos buscando expresiones
+        resultado = None
         for h in hijos:
             res = self._recorrer(h)
-            if isinstance(res, str):
-                return res
-
-        return None
+            if res is not None:
+                resultado = res
+        
+        return resultado
 
     # ============================================================
     #          GENERADORES PARA EXPRESIONES / SENTENCIAS
@@ -221,9 +253,24 @@ class CodigoIntermedioGenerator:
         """Método genérico para operaciones binarias.
         Formato: (op, operando1, operando2, resultado)
         """
-        op = getattr(nodo, "valor", op_default)
-        left = nodo.hijos[0] if len(nodo.hijos) > 0 else None
-        right = nodo.hijos[1] if len(nodo.hijos) > 1 else None
+        # Si el nodo tiene un valor específico de operador, usarlo
+        op = getattr(nodo, "valor", None)
+        if op is None:
+            op = op_default
+            
+        hijos = getattr(nodo, "hijos", []) or []
+        
+        # Si no hay hijos, este nodo no es una operación válida
+        if len(hijos) == 0:
+            return None
+            
+        # Si solo hay un hijo, delegar el procesamiento a ese hijo
+        if len(hijos) == 1:
+            return self._recorrer(hijos[0])
+        
+        # Procesar operandos
+        left = hijos[0] if len(hijos) > 0 else None
+        right = hijos[1] if len(hijos) > 1 else None
 
         l = self._recorrer(left)
         r = self._recorrer(right)
@@ -250,6 +297,7 @@ class CodigoIntermedioGenerator:
             "-": "sub",
             "*": "mul",
             "/": "div",
+            "%": "mod",
             ">": "gt",
             "<": "lt",
             ">=": "ge",
@@ -266,10 +314,30 @@ class CodigoIntermedioGenerator:
 
     def _suma(self, nodo):
         """Suma / resta binaria."""
+        hijos = getattr(nodo, "hijos", []) or []
+        
+        # Si solo hay un hijo, no es realmente una suma, delegar
+        if len(hijos) == 1:
+            return self._recorrer(hijos[0])
+        
+        # Si no hay hijos, retornar None
+        if len(hijos) == 0:
+            return None
+            
         return self._operacion_binaria(nodo, "add")
 
     def _mult(self, nodo):
         """Multiplicación / división binaria."""
+        hijos = getattr(nodo, "hijos", []) or []
+        
+        # Si solo hay un hijo, no es realmente una multiplicación, delegar
+        if len(hijos) == 1:
+            return self._recorrer(hijos[0])
+        
+        # Si no hay hijos, retornar None
+        if len(hijos) == 0:
+            return None
+            
         return self._operacion_binaria(nodo, "mul")
 
     def _rel(self, nodo):
@@ -279,6 +347,31 @@ class CodigoIntermedioGenerator:
     def _log(self, nodo):
         """Operadores lógicos (&&, ||)."""
         return self._operacion_binaria(nodo, "and")
+
+    def _negacion(self, nodo):
+        """Operador unario de negación (-expr) o positivo (+expr).
+        Formato: (neg, operando, _, resultado)
+        """
+        hijos = getattr(nodo, "hijos", []) or []
+        if not hijos:
+            return None
+        
+        operando = self._recorrer(hijos[0])
+        
+        if operando is None:
+            return None
+        
+        # Obtener el operador (+ o -)
+        operador = getattr(nodo, "valor", "-")
+        
+        # Si el operador es +, simplemente retornar el operando sin modificar
+        if operador == '+':
+            return operando
+        
+        # Si es -, generar la negación
+        t = self.nuevo_temp()
+        self.emitir("neg", operando, None, t)
+        return t
 
     # ============================================================
     #                 IF / ELSE

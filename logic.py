@@ -997,13 +997,26 @@ class AnalizadorSintactico:
 
 
     def componente(self):
-        """componente → ( expresion ) | número | id | bool | op_logico componente"""
+        """componente → ( expresion ) | número | id | bool | op_unario componente"""
         print("Analizando componente...")
         token = self.token_actual()
 
         if not token:
             self.agregar_error("Se esperaba una expresión", self.obtener_ultima_posicion_valida())
             return None
+
+        # ---- Operadores aritméticos unarios ----
+        if token.tipo == 'OPERADOR_ARITMETICO' and token.valor in ['-', '+']:
+            nodo = NodoAST("unario", token.valor)
+            nodo.set_posicion(token.linea, token.columna)
+            self.avanzar()  # consumir el operador
+            comp = self.componente()
+            if comp:
+                nodo.agregar_hijo(comp)
+            else:
+                self.agregar_error(f"Se esperaba un componente después del operador '{token.valor}'",
+                                (token.linea, token.columna))
+            return nodo
 
         # ---- Operador lógico unario ----
         if token.tipo == 'OPERADOR_LOGICO' and token.valor == '!':
@@ -1026,7 +1039,7 @@ class AnalizadorSintactico:
 
         # ---- Paréntesis ----
         if self.coincidir('('):
-            token_par = self.token_actual()
+            token_par = token
             self.avanzar()
             expr = self.expresion()
             if not self.consumir(')', "Se esperaba ')' después de la expresión"):
@@ -1054,10 +1067,11 @@ class AnalizadorSintactico:
 
         # ---- Error ----
         self.agregar_error(
-            f"Se esperaba número, identificador o expresión entre paréntesis, se encontró '{token.valor}' ({token.tipo})",
+            f"Se esperaba número, identificador, expresión entre paréntesis o operador unario, se encontró '{token.valor}' ({token.tipo})",
             (token.linea, token.columna)
         )
         return None
+
 
     def seleccion(self):
         """seleccion → if expresion then lista_sentencias [ else lista_sentencias ] end"""
