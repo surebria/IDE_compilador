@@ -1,12 +1,36 @@
 # generador_codigo_intermedio.py
 # Generador de Código Intermedio (TAC - Cuádruplas)
-# Compatible con NodoAST / NodoAnotado
+# Representación mediante cuádruplas de 4 campos: (op, addr1, addr2, addr3)
+
+class Cuadrupla:
+    """Representa una instrucción de código de 3 direcciones como cuádruple."""
+    
+    def __init__(self, op, addr1=None, addr2=None, addr3=None):
+        self.op = op
+        self.addr1 = addr1
+        self.addr2 = addr2
+        self.addr3 = addr3
+    
+    def __repr__(self):
+        """Representación legible de la cuádruple."""
+        a1 = self.addr1 if self.addr1 is not None else "_"
+        a2 = self.addr2 if self.addr2 is not None else "_"
+        a3 = self.addr3 if self.addr3 is not None else "_"
+        return f"({self.op}, {a1}, {a2}, {a3})"
+    
+    def __str__(self):
+        return self.__repr__()
+    
+    def to_tuple(self):
+        """Retorna la cuádruple como tupla."""
+        return (self.op, self.addr1, self.addr2, self.addr3)
+
 
 class CodigoIntermedioGenerator:
 
     def __init__(self):
         self.temp_count = 0
-        self.code = []   # lista de cuádruplas (op, arg1, arg2, res)
+        self.code = []   # lista de objetos Cuadrupla
         self.label_count = 0
 
     # -------- UTILIDADES -------- #
@@ -21,9 +45,17 @@ class CodigoIntermedioGenerator:
         self.label_count += 1
         return f"L{self.label_count}"
 
-    def emitir(self, op, a1="-", a2="-", res="-"):
-        """Agrega una cuádrupla al código."""
-        self.code.append((op, a1, a2, res))
+    def emitir(self, op, addr1=None, addr2=None, addr3=None):
+        """Agrega una cuádrupla al código.
+        
+        Args:
+            op: Operación (str)
+            addr1: Primera dirección (str o None)
+            addr2: Segunda dirección (str o None)
+            addr3: Tercera dirección (str o None)
+        """
+        cuadrupla = Cuadrupla(op, addr1, addr2, addr3)
+        self.code.append(cuadrupla)
 
     def reset(self):
         """Reinicia los contadores y el código generado."""
@@ -37,11 +69,15 @@ class CodigoIntermedioGenerator:
         """Genera y retorna la lista de strings con las cuádruplas."""
         self.reset()
         self._recorrer(nodo_raiz)
-        return [f"({op}, {a1}, {a2}, {res})" for (op, a1, a2, res) in self.code]
+        return [str(cuad) for cuad in self.code]
 
     def obtener_cuadruplas(self):
-        """Retorna las cuádruplas como lista de tuplas."""
+        """Retorna las cuádruplas como lista de objetos Cuadrupla."""
         return self.code.copy()
+    
+    def obtener_tuplas(self):
+        """Retorna las cuádruplas como lista de tuplas."""
+        return [cuad.to_tuple() for cuad in self.code]
 
     # ============================================================
     #                    VISITOR GENERAL
@@ -136,7 +172,9 @@ class CodigoIntermedioGenerator:
     # ============================================================
 
     def _asignacion(self, nodo):
-        """Genera código para una asignación. Nodo.valor = nombre var, hijo[0] = expr."""
+        """Genera código para una asignación.
+        Formato: (asn, valor, variable, _)
+        """
         nombre_var = getattr(nodo, "valor", None)
         if not nombre_var:
             return None
@@ -151,11 +189,13 @@ class CodigoIntermedioGenerator:
         if isinstance(val, str) and val == nombre_var:
             return nombre_var
 
-        self.emitir("=", val, "-", nombre_var)
+        self.emitir("asn", val, nombre_var, None)
         return nombre_var
 
     def _post_inc_dec(self, nodo):
-        """Genera código para post-incremento y post-decremento (a++ / c--)."""
+        """Genera código para post-incremento y post-decremento.
+        Formato: (add/sub, variable, 1, temp) y (asn, temp, variable, _)
+        """
         hijos = getattr(nodo, "hijos", []) or []
         if not hijos:
             return None
@@ -167,18 +207,20 @@ class CodigoIntermedioGenerator:
 
         # Generar temporal previo
         tmp = self.nuevo_temp()
-        self.emitir("=", nombre, "-", tmp)
+        self.emitir("asn", nombre, tmp, None)
         
         # Actualizar variable
         if nodo.tipo in ("post_dec", "post_decrement", "decremento", "c--", "dec"):
-            self.emitir("-", nombre, "1", nombre)
+            self.emitir("sub", nombre, "1", nombre)
         else:
-            self.emitir("+", nombre, "1", nombre)
+            self.emitir("add", nombre, "1", nombre)
             
         return tmp
 
     def _operacion_binaria(self, nodo, op_default):
-        """Método genérico para operaciones binarias."""
+        """Método genérico para operaciones binarias.
+        Formato: (op, operando1, operando2, resultado)
+        """
         op = getattr(nodo, "valor", op_default)
         left = nodo.hijos[0] if len(nodo.hijos) > 0 else None
         right = nodo.hijos[1] if len(nodo.hijos) > 1 else None
@@ -201,31 +243,53 @@ class CodigoIntermedioGenerator:
             return None
 
         t = self.nuevo_temp()
-        self.emitir(op, l, r, t)
+        
+        # Mapear operadores a formato estándar
+        op_map = {
+            "+": "add",
+            "-": "sub",
+            "*": "mul",
+            "/": "div",
+            ">": "gt",
+            "<": "lt",
+            ">=": "ge",
+            "<=": "le",
+            "==": "eq",
+            "!=": "ne",
+            "&&": "and",
+            "||": "or"
+        }
+        
+        op_mapped = op_map.get(op, op)
+        self.emitir(op_mapped, l, r, t)
         return t
 
     def _suma(self, nodo):
         """Suma / resta binaria."""
-        return self._operacion_binaria(nodo, "+")
+        return self._operacion_binaria(nodo, "add")
 
     def _mult(self, nodo):
         """Multiplicación / división binaria."""
-        return self._operacion_binaria(nodo, "*")
+        return self._operacion_binaria(nodo, "mul")
 
     def _rel(self, nodo):
         """Relacionales: >, <, ==, etc."""
-        return self._operacion_binaria(nodo, "==")
+        return self._operacion_binaria(nodo, "eq")
 
     def _log(self, nodo):
         """Operadores lógicos (&&, ||)."""
-        return self._operacion_binaria(nodo, "&&")
+        return self._operacion_binaria(nodo, "and")
 
     # ============================================================
     #                 IF / ELSE
     # ============================================================
 
     def _if_else(self, nodo):
-        """Genera código para if ... then ... else ... end"""
+        """Genera código para if ... then ... else ... end
+        Formato: (if_t, condicion, etiqueta_then, _)
+                 (goto, etiqueta_fin, _, _)
+                 (lab, etiqueta_else, _, _)
+        """
         hijos = getattr(nodo, "hijos", []) or []
         cond_node = hijos[0] if len(hijos) > 0 else None
         bloque_if = hijos[1] if len(hijos) > 1 else None
@@ -244,18 +308,25 @@ class CodigoIntermedioGenerator:
         L_else = self.nueva_etiqueta()
         L_fin = self.nueva_etiqueta()
 
-        self.emitir("IFFALSE", t_cond, "-", L_else)
+        # Si la condición es falsa, saltar al else
+        self.emitir("if_f", t_cond, L_else, None)
 
+        # Código del bloque if
         if bloque_if:
             self._recorrer(bloque_if)
 
-        self.emitir("GOTO", "-", "-", L_fin)
-        self.emitir("LABEL", "-", "-", L_else)
+        # Saltar al fin después del bloque if
+        self.emitir("goto", L_fin, None, None)
+        
+        # Etiqueta del bloque else
+        self.emitir("lab", L_else, None, None)
 
+        # Código del bloque else
         if bloque_else:
             self._recorrer(bloque_else)
 
-        self.emitir("LABEL", "-", "-", L_fin)
+        # Etiqueta de fin
+        self.emitir("lab", L_fin, None, None)
         return None
 
     # ============================================================
@@ -263,7 +334,11 @@ class CodigoIntermedioGenerator:
     # ============================================================
 
     def _while(self, nodo):
-        """Genera código para while ... do ... end"""
+        """Genera código para while ... do ... end
+        Formato: (lab, etiqueta_inicio, _, _)
+                 (if_f, condicion, etiqueta_fin, _)
+                 (goto, etiqueta_inicio, _, _)
+        """
         hijos = getattr(nodo, "hijos", []) or []
         cond_node = hijos[0] if len(hijos) > 0 else None
         bloque = hijos[1] if len(hijos) > 1 else None
@@ -271,23 +346,30 @@ class CodigoIntermedioGenerator:
         L_inicio = self.nueva_etiqueta()
         L_fin = self.nueva_etiqueta()
 
-        self.emitir("LABEL", "-", "-", L_inicio)
+        # Etiqueta de inicio del ciclo
+        self.emitir("lab", L_inicio, None, None)
 
+        # Evaluar condición
         t_cond = self._recorrer(cond_node)
         
         if t_cond is None:
             if bloque:
                 self._recorrer(bloque)
-            self.emitir("LABEL", "-", "-", L_fin)
+            self.emitir("lab", L_fin, None, None)
             return None
 
-        self.emitir("IFFALSE", t_cond, "-", L_fin)
+        # Si la condición es falsa, salir del ciclo
+        self.emitir("if_f", t_cond, L_fin, None)
         
+        # Código del bloque
         if bloque:
             self._recorrer(bloque)
             
-        self.emitir("GOTO", "-", "-", L_inicio)
-        self.emitir("LABEL", "-", "-", L_fin)
+        # Regresar al inicio
+        self.emitir("goto", L_inicio, None, None)
+        
+        # Etiqueta de fin
+        self.emitir("lab", L_fin, None, None)
         return None
 
     # ============================================================
@@ -295,7 +377,10 @@ class CodigoIntermedioGenerator:
     # ============================================================
 
     def _do_until(self, nodo):
-        """Genera código para do ... until"""
+        """Genera código para do ... until
+        Formato: (lab, etiqueta_inicio, _, _)
+                 (if_f, condicion, etiqueta_inicio, _)
+        """
         hijos = getattr(nodo, "hijos", []) or []
         bloque_do = hijos[0] if len(hijos) > 0 else None
         cond_node = hijos[1] if len(hijos) > 1 else None
@@ -303,20 +388,25 @@ class CodigoIntermedioGenerator:
         L_ini = self.nueva_etiqueta()
         L_fin = self.nueva_etiqueta()
 
-        self.emitir("LABEL", "-", "-", L_ini)
+        # Etiqueta de inicio
+        self.emitir("lab", L_ini, None, None)
         
+        # Código del bloque
         if bloque_do:
             self._recorrer(bloque_do)
 
+        # Evaluar condición
         t_cond = self._recorrer(cond_node)
         
         if t_cond is None:
-            self.emitir("LABEL", "-", "-", L_fin)
+            self.emitir("lab", L_fin, None, None)
             return None
 
-        # do ... until: repetir mientras NO se cumpla
-        self.emitir("IFFALSE", t_cond, "-", L_ini)
-        self.emitir("LABEL", "-", "-", L_fin)
+        # do ... until: repetir mientras NO se cumpla (si es falso, regresar)
+        self.emitir("if_f", t_cond, L_ini, None)
+        
+        # Etiqueta de fin
+        self.emitir("lab", L_fin, None, None)
         return None
 
     # ============================================================
@@ -324,7 +414,9 @@ class CodigoIntermedioGenerator:
     # ============================================================
 
     def _cin(self, nodo):
-        """Genera código para entrada (cin/read)."""
+        """Genera código para entrada (cin/read).
+        Formato: (rd, variable, _, _)
+        """
         hijos = getattr(nodo, "hijos", []) or []
         if not hijos:
             return None
@@ -335,11 +427,13 @@ class CodigoIntermedioGenerator:
         if nombre is None:
             return None
             
-        self.emitir("READ", "-", "-", nombre)
+        self.emitir("rd", nombre, None, None)
         return None
 
     def _cout(self, nodo):
-        """Genera código para salida (cout/write)."""
+        """Genera código para salida (cout/write).
+        Formato: (wri, variable/expresion, _, _)
+        """
         hijos = getattr(nodo, "hijos", []) or []
         if not hijos:
             return None
@@ -352,5 +446,5 @@ class CodigoIntermedioGenerator:
                 return None
             salida = str(salida)
             
-        self.emitir("WRITE", salida, "-", "-")
+        self.emitir("wri", salida, None, None)
         return None

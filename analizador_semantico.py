@@ -152,7 +152,7 @@ class NodoAnotado:
     
     def __str__(self):
         return f"NodoAnotado({self.tipo}, {self.valor}, tipo={self.tipo_dato}, valor={self.valor_calculado})"
-
+    
 
 class AnalizadorSemantico:
     """Analizador semántico que recorre el AST y verifica reglas semánticas."""
@@ -211,10 +211,14 @@ class AnalizadorSemantico:
             self.report_error("AST_INVALIDO", "El AST está vacío", 0, 0, fatal=True)
             return None, self.tabla_simbolos, self.errores
         
+        # Imprimir el AST original
+        self.imprimir_ast(ast_root)
+
         # Anotar el AST completo
         ast_anotado = self.anotar_nodo(ast_root)
         
         return ast_anotado, self.tabla_simbolos, self.errores
+
     
     def anotar_nodo(self, nodo):
         """Anota un nodo del AST con información semántica."""
@@ -747,6 +751,16 @@ class AnalizadorSemantico:
             hijo_anotado = self.evaluar_expresion(hijo)
             nodo_anotado.agregar_hijo(hijo_anotado)
 
+    def imprimir_ast(self, nodo, nivel=0):
+        """Imprime el AST de forma legible."""
+        if nodo is None:
+            return
+        
+        indent = "  " * nivel
+        print(f"{indent}{nodo.tipo} = {nodo.valor}")
+        
+        for hijo in nodo.hijos:
+            self.imprimir_ast(hijo, nivel + 1)
 
 def ejecutar_analisis_semantico(ast):
     """Función principal para ejecutar el análisis semántico."""
