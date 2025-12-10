@@ -1,38 +1,34 @@
 programa
   main
-    declaracion_variable | Tipo: int
-      tipo: int | Tipo: int
-      id: x | Tipo: int
-      id: a | Tipo: int
-      id: b | Tipo: int
-      id: c | Tipo: int
-      id: d | Tipo: int
-      id: e | Tipo: int
-      id: f | Tipo: int
-    asignacion: a | Tipo: int | Valor: 4
-      numero: 4 | Tipo: int | Valor: 4
-    asignacion: b | Tipo: int | Valor: 5
-      numero: 5 | Tipo: int | Valor: 5
-    asignacion: c | Tipo: int | Valor: 6
-      numero: 6 | Tipo: int | Valor: 6
-    asignacion: d | Tipo: int | Valor: 7
-      numero: 7 | Tipo: int | Valor: 7
-    asignacion: e | Tipo: int | Valor: 5
-      numero: 5 | Tipo: int | Valor: 5
-    asignacion: f | Tipo: int | Valor: 1
-      numero: 1 | Tipo: int | Valor: 1
-    asignacion: x | Tipo: int | Valor: 36
-      suma_op: + | Tipo: int | Valor: 36
-        suma_op: + | Tipo: int | Valor: 34
-          id: a | Tipo: int | Valor: 4
-          mult_op: * | Tipo: int | Valor: 30
-            id: b | Tipo: int | Valor: 5
-            id: c | Tipo: int | Valor: 6
-        mult_op: / | Tipo: int | Valor: 2
-          suma_op: - | Tipo: int | Valor: 2
-            id: d | Tipo: int | Valor: 7
-            id: e | Tipo: int | Valor: 5
-          id: f | Tipo: int | Valor: 1
+    declaracion_variable | Tipo: float
+      tipo: float | Tipo: float
+      id: base | Tipo: float
+    declaracion_variable | Tipo: float
+      tipo: float | Tipo: float
+      id: altura | Tipo: float
+    declaracion_variable | Tipo: float
+      tipo: float | Tipo: float
+      id: perimetro | Tipo: float
+    declaracion_variable | Tipo: float
+      tipo: float | Tipo: float
+      id: area | Tipo: float
+    sent_in: cin
+      id: base | Tipo: float
+    sent_in: cin
+      id: altura | Tipo: float
+    asignacion: perimetro | Tipo: float
+      mult_op: * | Tipo: float
+        numero: 2.0 | Tipo: float | Valor: 2.0
+        suma_op: + | Tipo: float
+          id: base | Tipo: float
+          id: altura | Tipo: float
+    asignacion: area | Tipo: float
+      mult_op: * | Tipo: float
+        id: base | Tipo: float
+        id: altura | Tipo: float
     sent_out: cout
-      salida | Tipo: int | Valor: 36
-        id: x | Tipo: int | Valor: 36
+      salida | Tipo: float
+        id: perimetro | Tipo: float
+    sent_out: cout
+      salida | Tipo: float
+        id: area | Tipo: float

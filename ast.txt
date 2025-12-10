@@ -4,15 +4,34 @@ programa
       tipo
       identificador
         id
+    declaracion_variable
+      tipo
+      identificador
+        id
+    declaracion_variable
+      tipo
+      identificador
+        id
+    declaracion_variable
+      tipo
+      identificador
+        id
+    sent_in
+      id
+    sent_in
+      id
+    asignacion
+      mult_op
+        numero
+        suma_op
+          id
+          id
+    asignacion
+      mult_op
         id
         id
-    asignacion
-      numero
-    asignacion
-      numero
-    asignacion
-      suma_op
-        id
+    sent_out
+      salida
         id
     sent_out
       salida

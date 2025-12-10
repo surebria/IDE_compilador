@@ -269,21 +269,25 @@ class InterpreteCI:
     
     def _ejecutar_read(self, variable):
         """Lee un valor de entrada y lo almacena en la variable"""
+        
         if not self.entrada_buffer:
             # Si no hay entrada, solicitar al usuario
             try:
                 valor = input(f"Ingrese valor para {variable}: ")
-                try:
-                    valor = float(valor) if '.' in valor else int(valor)
-                except ValueError:
-                    pass  # Mantener como string
             except EOFError:
                 valor = 0
         else:
             valor = self.entrada_buffer.pop(0)
-        
+
+        # Intentar convertir automáticamente
+        try:
+            valor = float(valor) if '.' in str(valor) else int(valor)
+        except:
+            pass
+
         self.memoria[str(variable)] = valor
         self.pc += 1
+
     
     def _ejecutar_write(self, addr):
         """Escribe un valor a la salida"""

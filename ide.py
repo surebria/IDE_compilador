@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
+    QApplication, QDialog, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QTabWidget, QSplitter, QMenuBar, QMenu, 
     QFileDialog, QLabel, QPlainTextEdit, QHBoxLayout, QToolBar, QStatusBar, QScrollBar, QTreeWidget,
     QTreeWidgetItem, QTableWidget, QTableWidgetItem, QHeaderView # Se agregaron estas importaciones
 )
@@ -14,6 +14,39 @@ from interprete import InterpreteCI
 from PyQt6.QtGui import QFont
 from logic import HighlightSyntax
 from logic import analizador_lexico
+
+
+class ConsolaRead(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Consola de Entrada (READ)")
+        self.resize(420, 300)
+
+        self.valores = []
+
+        layout = QVBoxLayout()
+
+        self.label = QLabel("Ingrese los valores para READ (uno por línea):")
+        layout.addWidget(self.label)
+
+        self.texto = QTextEdit()
+        self.texto.setPlaceholderText("Escribe valores aquí…\nEjemplo:\n5\n10\nhola")
+        layout.addWidget(self.texto)
+
+        self.btn = QPushButton("Aceptar")
+        self.btn.clicked.connect(self.accept)
+        layout.addWidget(self.btn)
+
+        self.setLayout(layout)
+
+    def obtener_valores(self):
+        """Devuelve los valores ingresados como lista"""
+        if self.exec() == QDialog.DialogCode.Accepted:
+            txt = self.texto.toPlainText().strip()
+            if not txt:
+                return []
+            return [x.strip() for x in txt.split("\n")]
+        return []
 
 
 class LineNumberArea(QWidget):
@@ -1022,7 +1055,6 @@ class CompilerIDE(QMainWindow):
     def ejecutar_programa(self):
         """Ejecuta el código intermedio ya generado y mostrado en la interfaz."""
         try:
-            # 1. Obtener el código intermedio generado
             texto_ir = self.codigo_intermedio.toPlainText().strip()
 
             if not texto_ir:
@@ -1034,58 +1066,39 @@ class CompilerIDE(QMainWindow):
                 self.errors_tabs.setCurrentIndex(index)
                 return
 
-            # Convertir líneas "(op, a1, a2, res)" a tuplas reales
             cuadruplas = []
             for line in texto_ir.split("\n"):
                 line = line.strip()
                 if not line:
                     continue
 
-                # Quitar paréntesis
                 line = line.replace("(", "").replace(")", "")
-
                 partes = [p.strip() for p in line.split(",")]
 
-                # Asegurar siempre 4 elementos
                 while len(partes) < 4:
                     partes.append("")
 
                 op, a1, a2, a3 = partes[:4]
-
-                # Limpiar espacios
-                op = op.strip()
-                a1 = a1.strip()
-                a2 = a2.strip()
-                a3 = a3.strip()
-
                 cuadruplas.append((op, a1, a2, a3))
 
-            # 2. Ejecutar código
+            # ---- CONSOLA PARA READ ----
+            consola = ConsolaRead()
+            lista_inputs = consola.obtener_valores()
+
             interprete = InterpreteCI()
             resultado = interprete.ejecutar(
                 cuadruplas=cuadruplas,
-                entrada=[],        # valores para READ()
+                entrada=lista_inputs,
                 max_steps=10000
             )
 
-            # 3. Mostrar resultados
             salida = resultado.get("salida", "")
-            # memoria = resultado.get("memoria", {})
 
             texto = ""
-            # texto += "Salida del programa:\n\n"
             if salida:
                 texto += " ".join(str(x) for x in salida) + "\n\n"
             else:
                 texto += "   (sin salida)\n\n"
-
-
-            # texto += "Memoria final:\n"
-            # if memoria:
-            #     for k, v in memoria.items():
-            #         texto += f"   {k} = {v}\n"
-            # else:
-            #     texto += "   (vacía)\n"
 
             self.resultados_widget.setText(texto)
             index = self.errors_tabs.indexOf(self.resultados_widget)
@@ -1095,6 +1108,7 @@ class CompilerIDE(QMainWindow):
             self.resultados_widget.setText(f"❌ Error durante la ejecución:\n{str(e)}")
             index = self.errors_tabs.indexOf(self.resultados_widget)
             self.errors_tabs.setCurrentIndex(index)
+
 
 
     def close_file(self):
